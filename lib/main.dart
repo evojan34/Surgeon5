@@ -498,7 +498,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
   bool _isLoading = true;
   bool _isAnonymized = false;
 
-  // بيانات الطبيب المقيم (للتقارير والإعدادات)
   String _residentName = 'د. إيفان إحسان';
   String _residentLevel = 'البورد في الجراحة العامة';
   String _hospitalName = 'المستشفى التعليمي';
@@ -829,10 +828,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // الهيدر الكحلي العلوي المطابق للتصميم بالضبط
             _buildTopSurgicalHeader(),
-
-            // محتوى التبويب المختار
             Expanded(
               child: IndexedStack(
                 index: _currentTabIndex,
@@ -851,9 +847,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // ==========================================
-  // الهيدر العلوي الكحلي مع نبض القلب والأزرار الثلاثة
-  // ==========================================
   Widget _buildTopSurgicalHeader() {
     return Container(
       width: double.infinity,
@@ -878,7 +871,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
       ),
       child: Row(
         children: [
-          // القسم الأيمن: عنوان "سجل البورد الجراحي" مع خط تخطيط القلب ECG
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -901,16 +893,12 @@ class _MainShellScreenState extends State<MainShellScreen> {
               ],
             ),
           ),
-
-          // الخط الفاصل العمودي (|)
           Container(
             height: 46,
             width: 1.5,
             margin: const EdgeInsets.symmetric(horizontal: 10),
             color: Colors.white38,
           ),
-
-          // الأزرار الثلاثة اليسرى (سيمينار | لوكبوك PDF | نسخ)
           _buildHeaderSquareButton(
             label: 'سيمينار',
             iconWidget: Icon(
@@ -990,9 +978,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // ==========================================
-  // التبويب الأول: الشاشة الرئيسية (المطابقة للصورة 100%)
-  // ==========================================
   Widget _buildMainDashboardTab() {
     final totalCount = _allPatients.length;
     final primarySurgeonCount = _allPatients
@@ -1007,7 +992,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
             children: [
-              // البطاقات الإحصائية الأربع الملونة
               Row(
                 children: [
                   _buildColoredStatCard(
@@ -1028,7 +1012,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                     label: 'جراح P/S',
                     bgColor: AppColors.statBlueBg,
                     bottomBorderColor: AppColors.statBlueBorder,
-                    icon: Icons.colorize_rounded, // أيقونة المشرط الجراحي
+                    icon: Icons.colorize_rounded,
                     iconColor: AppColors.statBlueBorder,
                     onTap: () => setState(() {
                       _selectedFilter = 'الكل';
@@ -1041,7 +1025,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                     label: 'الزرع',
                     bgColor: AppColors.statMintBg,
                     bottomBorderColor: AppColors.statMintBorder,
-                    icon: Icons.biotech_rounded, // أيقونة المجهر
+                    icon: Icons.biotech_rounded,
                     iconColor: const Color(0xFF1F4E5B),
                     onTap: () => setState(() {
                       _selectedFilter = 'بانتظار الزرع';
@@ -1063,10 +1047,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 14),
-
-              // شريط البحث البيضاوي (Pill Search Bar)
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -1096,10 +1077,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   },
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // أزرار الفلترة البيضاوية مع الأيقونات
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -1136,10 +1114,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 14),
-
-              // قائمة بطاقات المرضى
               if (_isLoading)
                 const Padding(
                   padding: EdgeInsets.all(40),
@@ -1169,8 +1144,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
             ],
           ),
         ),
-
-        // الزر السفلي الكحلي العريض (إضافة حالة جديدة) مع الخطين الجانبيين كما في الصورة
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
           child: Row(
@@ -1235,7 +1208,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // البطاقة الإحصائية الملونة ذات الشريط السفلي
   Widget _buildColoredStatCard({
     required String count,
     required String label,
@@ -1295,7 +1267,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // أزرار الفلترة البيضاوية
   Widget _buildFilterPill({
     required String label,
     required IconData icon,
@@ -1345,7 +1316,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // بطاقة المريض المطابقة للتصميم في الصورة
   Widget _buildSurgicalPatientCard(PatientRecord patient) {
     final totalPhotos = patient.radiologyImages.length +
         patient.labImages.length +
@@ -1389,7 +1359,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // السطر العلوي: حالة العملية يميناً | اسم المريض والنجمة وسطاً | رمز الدور (P) يساراً
               Row(
                 children: [
                   _buildStatusGreenBadge(patient.operationStatus),
@@ -1436,10 +1405,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
-
-              // السطر الثاني: الجراحة العامة | د. سامر | دم: O+
               Center(
                 child: Text(
                   '${patient.rotation}   |   د. ${patient.consultantName.isEmpty ? "غير محدد" : patient.consultantName}   |   دم: ${patient.bloodGroup}',
@@ -1450,17 +1416,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ),
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Divider(height: 1, color: Colors.blueGrey.shade100),
               ),
-
-              // سطر التشخيص
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.medical_Information_outlined, size: 19, color: AppColors.navyAccent),
+                  const Icon(Icons.medical_information_outlined, size: 19, color: AppColors.navyAccent),
                   const SizedBox(width: 6),
                   const Text(
                     'التشخيص: ',
@@ -1484,10 +1447,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 6),
-
-              // سطر العملية
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1515,10 +1475,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
-              // السطر السفلي: الـ 3 أوسمة الملونة (شفاء تام | بانتظار الزرع | 4 صور مرفقة)
               Row(
                 children: [
                   Expanded(
@@ -1627,9 +1584,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // ==========================================
-  // التبويب الثاني: فهرس الحالات حسب الروتيشن (Cases by Rotation)
-  // ==========================================
   Widget _buildCasesByRotationTab() {
     final Map<String, List<PatientRecord>> grouped = {};
     for (var p in _allPatients) {
@@ -1690,9 +1644,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // ==========================================
-  // التبويب الثالث: الإحصائيات ومتابعة أهداف البورد (Board Analytics)
-  // ==========================================
   Widget _buildStatisticsAnalyticsTab() {
     final total = _allPatients.length;
     final pCount = _allPatients.where((p) => p.surgeonRole.startsWith('P')).length;
@@ -1812,9 +1763,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // ==========================================
-  // التبويب الرابع: إعدادات الطبيب المقيم والنسخ الاحتياطي
-  // ==========================================
   Widget _buildSettingsProfileTab() {
     final nameCtrl = TextEditingController(text: _residentName);
     final levelCtrl = TextEditingController(text: _residentLevel);
@@ -1885,9 +1833,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  // ==========================================
-  // شريط التنقل السفلي الرباعي المطابق للتصميم
-  // ==========================================
   Widget _buildCustomBottomNavBar() {
     final items = [
       {'label': 'الرئيسية', 'icon': Icons.home_rounded},
@@ -2071,7 +2016,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
     }
   }
 
-  // تعبئة تلقائية لأشهر العمليات الجراحية لتوفير وقت المقيم
   void _applyQuickTemplate(String title, String diag, String op, String mag, String notes) {
     setState(() {
       _diagnosisCtrl.text = diag;
@@ -2192,7 +2136,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(14),
           children: [
-            // شريط القوالب الجراحية السريعة
             Card(
               color: AppColors.statBlueBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -2244,7 +2187,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
               ),
             ),
             const SizedBox(height: 10),
-
             _buildSectionCard(
               title: '1. البيانات الشخصية للمريض',
               icon: Icons.person,
@@ -2280,7 +2222,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 ),
               ],
             ),
-
             _buildSectionCard(
               title: '2. بيانات اللوكبوك الجراحي (Board Logbook)',
               icon: Icons.badge,
@@ -2311,7 +2252,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 ),
               ],
             ),
-
             _buildSectionCard(
               title: '3. التاريخ المرضي والجراحات السابقة',
               icon: Icons.history_edu,
@@ -2324,7 +2264,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_pastCompCtrl, 'مضاعفات جراحية أو تخديرية سابقة'),
               ],
             ),
-
             _buildSectionCard(
               title: '4. مما يعاني حالياً والتشخيص السريري',
               icon: Icons.medical_information,
@@ -2335,7 +2274,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_diagnosisCtrl, 'التشخيص النهائي (Diagnosis) *', required: true),
               ],
             ),
-
             _buildSectionCard(
               title: '5. تفاصيل العملية الجراحية المقررة',
               icon: Icons.local_hospital,
@@ -2387,7 +2325,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_opNotesCtrl, 'تفاصيل وخطوات العملية (Operative Notes)', maxLines: 3),
               ],
             ),
-
             _buildSectionCard(
               title: '6. متابعة الردهة، الدرينات، والوقاية',
               icon: Icons.vaccines,
@@ -2407,7 +2344,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_antibioticCtrl, 'خطة الصادات الحيوية (Antibiotic Prophylaxis)'),
               ],
             ),
-
             _buildSectionCard(
               title: '7. متابعة الزرع النسيجي والأورام (Histopathology)',
               icon: Icons.biotech,
@@ -2422,7 +2358,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_tnmCtrl, 'تصنيف الأورام (TNM Staging) وقرار الـ MDT'),
               ],
             ),
-
             _buildSectionCard(
               title: '8. ملاحظات البورد والامتحان (Surgical Pearls)',
               icon: Icons.school,
@@ -2437,7 +2372,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_pearlsCtrl, 'الملاحظات التشريحية والدروس الجراحية المستفادة', maxLines: 3),
               ],
             ),
-
             _buildSectionCard(
               title: '9. الأرشيف الصوري الطبي (4 أقسام)',
               icon: Icons.camera_enhance,
@@ -2451,7 +2385,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildMediaPickerSection('صور تقرير الزرع النسيجي (Biopsy)', _biopsyImages, 'biopsy'),
               ],
             ),
-
             _buildSectionCard(
               title: '10. النتيجة النهائية وخطة الخروج',
               icon: Icons.fact_check,
@@ -2472,7 +2405,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_followUpCtrl, 'موعد المراجعة القادم ورفع الخيوط'),
               ],
             ),
-
             const SizedBox(height: 16),
             SizedBox(
               height: 52,
@@ -3046,7 +2978,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: File(imgPath).existsSync()
-                              ? Image.file(File(imgPath), fit: BoxFit.cover)
+                              ? Image.file(File(path), fit: BoxFit.cover)
                               : const Icon(Icons.broken_image),
                         ),
                       ),
