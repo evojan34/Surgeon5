@@ -2978,7 +2978,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: File(imgPath).existsSync()
-                              ? Image.file(File(path), fit: BoxFit.cover)
+                              ? Image.file(File(imgPath), fit: BoxFit.cover)
                               : const Icon(Icons.broken_image),
                         ),
                       ),
