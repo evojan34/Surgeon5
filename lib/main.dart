@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
@@ -9,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,10 +33,6 @@ class SurgicalRegistryApp extends StatelessWidget {
           foregroundColor: Colors.white,
           centerTitle: true,
           elevation: 2,
-        ),
-        cardTheme: CardTheme(
-          elevation: 1.5,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       builder: (context, child) {
@@ -81,15 +77,15 @@ class PatientRecord {
 
   // العملية المقررة
   final String plannedOperation;
-  final String operationUrgency; // مجدولة (باردة) | طارئة
-  final String asaScore; // ASA I, II, III, IV, V
-  final String anesthesiaType; // عام | نصفي | موضعي
+  final String operationUrgency;
+  final String asaScore;
+  final String anesthesiaType;
   final String operationDate;
-  final String operationStatus; // مقررة | تمت العملية | مؤجلة
+  final String operationStatus;
   final String operativeNotes;
 
   // النتيجة النهائية والمتابعة
-  final String finalOutcome; // قيد المتابعة | شفاء تام | تحسن | مضاعفات | وفاة
+  final String finalOutcome;
   final String clavienDindoGrade;
   final String dischargeTreatment;
   final String followUpDate;
@@ -303,7 +299,6 @@ class DatabaseHelper {
     return await db.delete('patients', where: 'id = ?', whereArgs: [id]);
   }
 
-  // حفظ الصورة في مجلد دائم داخل التطبيق
   static Future<String?> pickAndSaveMedicalImage(ImageSource source, String categoryPrefix) async {
     final picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(source: source, imageQuality: 85);
@@ -373,10 +368,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _exportBackupJson() async {
     final list = _allPatients.map((e) => e.toMap()).toList();
     final jsonString = const JsonEncoder.withIndent('  ').convert(list);
-    final dir = await getTemporaryDirectory();
-    final file = File(p.join(dir.path, 'surgical_patients_backup.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], text: 'نسخة احتياطية لقاعدة بيانات المرضى والعمليات');
+    await Clipboard.setData(ClipboardData(text: jsonString));
+    final bytes = Uint8List.fromList(utf8.encode(jsonString));
+    await Printing.sharePdf(bytes: bytes, filename: 'surgical_patients_backup.json');
   }
 
   void _showImportDialog() {
@@ -442,7 +436,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (val == 'import') _showImportDialog();
             },
             itemBuilder: (ctx) => [
-              const PopupMenuItem(value: 'export', child: Text('تصدير نسخة احتياطية (JSON)')),
+              const PopupMenuItem(value: 'export', child: Text('نسخ ومشاركة قاعدة البيانات (JSON)')),
               const PopupMenuItem(value: 'import', child: Text('استعادة نسخة احتياطية')),
             ],
           ),
@@ -450,7 +444,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
-          // شريط الإحصائيات السريعة
           Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
             child: Row(
@@ -465,8 +458,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-
-          // شريط البحث والفلترة
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: TextField(
@@ -489,7 +480,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
           ),
-
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -512,8 +502,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               }).toList(),
             ),
           ),
-
-          // قائمة المرضى
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -543,6 +531,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(14),
                               onTap: () async {
@@ -647,7 +636,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border(right: BorderSide(color: color, width: 4)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4)],
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
         ),
         child: Column(
           children: [
@@ -914,7 +903,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 ),
               ],
             ),
-
             _buildSectionCard(
               title: '2. التاريخ المرضي والدوائي',
               icon: Icons.history_edu,
@@ -925,7 +913,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildDropdown('حالة التدخين', _smokingStatus, ['غير مدخن', 'مدخن حالي', 'مدخن سابق'], (v) => setState(() => _smokingStatus = v!)),
               ],
             ),
-
             _buildSectionCard(
               title: '3. الجراحات السابقة',
               icon: Icons.healing,
@@ -934,7 +921,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_pastCompCtrl, 'مضاعفات جراحية أو تخديرية سابقة (إن وجدت)'),
               ],
             ),
-
             _buildSectionCard(
               title: '4. مما يعاني حالياً والتشخيص السريري',
               icon: Icons.medical_information,
@@ -945,7 +931,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_diagnosisCtrl, 'التشخيص الطبي النهائي (Diagnosis) *', required: true),
               ],
             ),
-
             _buildSectionCard(
               title: '5. تفاصيل العملية الجراحية المقررة',
               icon: Icons.local_hospital,
@@ -997,7 +982,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_opNotesCtrl, 'ملاحظات الجراح وتفاصيل ما أثناء العملية (Operative Notes)', maxLines: 3),
               ],
             ),
-
             _buildSectionCard(
               title: '6. المرفقات الصورية (أشعة، تحاليل، وصور الجرح)',
               icon: Icons.camera_enhance,
@@ -1009,7 +993,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildMediaPickerSection('صور الجرح والعملية (قبل/بعد)', _woundImages, 'wound'),
               ],
             ),
-
             _buildSectionCard(
               title: '7. النتيجة النهائية وخطة الخروج',
               icon: Icons.fact_check,
@@ -1030,7 +1013,6 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_followUpCtrl, 'موعد المراجعة القادم ورفع الخيوط'),
               ],
             ),
-
             const SizedBox(height: 16),
             SizedBox(
               height: 52,
@@ -1118,6 +1100,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
   Widget _buildSectionCard({required String title, required IconData icon, required List<Widget> children}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -1396,9 +1379,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          // البطاقة التعريفية العلوية
           Card(
             color: const Color(0xFF004D40),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -1433,19 +1416,15 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
               ),
             ),
           ),
-
-          // قسم الصور الطبية التفاعلي (أشعة - تحاليل - جرح)
-          _buildGalleryCard('صور الأشعة والمفراس والرنين (Radiology)', p.radiologyImages, 'xray', Icons.EdgesensorHigh),
+          _buildGalleryCard('صور الأشعة والمفراس والرنين (Radiology)', p.radiologyImages, 'xray', Icons.scanner),
           _buildGalleryCard('صور التحاليل المختبرية (Lab Results)', p.labImages, 'lab', Icons.biotech),
           _buildGalleryCard('صور الجرح والعملية (Wound & Post-Op)', p.woundImages, 'wound', Icons.healing),
-
           _buildDetailsCard('الشكوى الحالية والتشخيص', [
             _item('مما يعاني حالياً (الشكوى):', p.chiefComplaint),
             _item('الفحص السريري:', p.clinicalExam),
             _item('ملاحظات التحاليل والأشعة:', p.labRadiologyNotes),
             _item('التشخيص النهائي:', p.diagnosis),
           ]),
-
           _buildDetailsCard('العملية الجراحية المقررة', [
             _item('اسم ونوع العملية:', p.plannedOperation),
             _item('التصنيف والحالة:', '${p.operationUrgency} | الحالة: ${p.operationStatus}'),
@@ -1453,7 +1432,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             _item('تاريخ العملية:', p.operationDate),
             _item('ملاحظات العملية (Operative Notes):', p.operativeNotes),
           ]),
-
           _buildDetailsCard('التاريخ المرضي والجراحي السابق', [
             _item('الأمراض المزمنة:', p.chronicDiseases),
             _item('الحساسية الدوائية:', p.allergies),
@@ -1462,7 +1440,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             _item('العمليات الجراحية السابقة:', p.pastSurgeries),
             _item('مضاعفات سابقة:', p.pastComplications),
           ]),
-
           _buildDetailsCard('النتيجة النهائية والمتابعة', [
             _item('النتيجة النهائية:', p.finalOutcome),
             _item('تصنيف المضاعفات (Clavien-Dindo):', p.clavienDindoGrade),
@@ -1477,6 +1454,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   Widget _buildGalleryCard(String title, List<String> paths, String categoryKey, IconData icon) {
     return Card(
       margin: const EdgeInsets.only(top: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1485,12 +1463,14 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(icon, color: Colors.teal.shade800, size: 20),
-                    const SizedBox(width: 8),
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(icon, color: Colors.teal.shade800, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                    ],
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () => _quickAddImage(categoryKey),
@@ -1541,6 +1521,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   Widget _buildDetailsCard(String sectionTitle, List<Widget> items) {
     return Card(
       margin: const EdgeInsets.only(top: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
