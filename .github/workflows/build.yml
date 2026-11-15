@@ -33,6 +33,11 @@ jobs:
           mv pubspec.yaml.bak pubspec.yaml
           mv main.dart.bak lib/main.dart
 
+          # رفع compileSdk إلى 35 تلقائياً لحل تحذير الإضافات
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 35/g' android/app/build.gradle
+
+          # إضافة صلاحيات الكاميرا والاستوديو
           sed -i 's/<application/<uses-permission android:name="android.permission.CAMERA"\/><uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"\/><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"\/><uses-permission android:name="android.permission.READ_MEDIA_IMAGES"\/><application/g' android/app/src/main/AndroidManifest.xml
 
       - name: Install Dependencies
