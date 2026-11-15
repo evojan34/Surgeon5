@@ -22,7 +22,7 @@ class SurgicalRegistryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'سجل الجراحة والمرضى',
+      title: 'سجل البورد الجراحي والمرضى',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -47,7 +47,7 @@ class SurgicalRegistryApp extends StatelessWidget {
 }
 
 // ==========================================
-// 1. نموذج بيانات المريض (Patient Model)
+// 1. نموذج بيانات المريض واللوكبوك (Patient & Logbook Model)
 // ==========================================
 class PatientRecord {
   final int? id;
@@ -59,13 +59,17 @@ class PatientRecord {
   final String bloodGroup;
   final String admissionDate;
 
-  // التاريخ المرضي
+  // بيانات اللوكبوك الجراحي (Board Logbook)
+  final String rotation;
+  final String consultantName;
+  final String surgeonRole; // P | S-TS | S-TU | A
+  final String operationMagnitude; // Complex Major | Major | Intermediate | Minor
+
+  // التاريخ المرضي والجراحي
   final String chronicDiseases;
   final String allergies;
   final String currentMedications;
   final String smokingStatus;
-
-  // التاريخ الجراحي السابق
   final String pastSurgeries;
   final String pastComplications;
 
@@ -84,16 +88,31 @@ class PatientRecord {
   final String operationStatus;
   final String operativeNotes;
 
+  // متابعة الردهة والوقاية (Ward Round & Prophylaxis)
+  final String drainsInfo;
+  final String dvtProphylaxis;
+  final String antibioticProphylaxis;
+
+  // الزرع النسيجي والأورام (Histopathology & TNM)
+  final String biopsyStatus; // لا يحتاج زرع | بانتظار الزرع (Pending) | ظهرت النتيجة
+  final String histopathologyResult;
+  final String tnmStaging;
+
+  // بنك الامتحان والملاحظات التشريحية (Viva & Surgical Pearls)
+  final bool isStarred;
+  final String surgicalPearls;
+
   // النتيجة النهائية والمتابعة
   final String finalOutcome;
   final String clavienDindoGrade;
   final String dischargeTreatment;
   final String followUpDate;
 
-  // مسارات الصور الطبية (JSON Arrays)
+  // مسارات الصور الطبية (4 أقسام)
   final List<String> radiologyImages;
   final List<String> labImages;
   final List<String> woundImages;
+  final List<String> biopsyImages;
 
   PatientRecord({
     this.id,
@@ -104,6 +123,10 @@ class PatientRecord {
     required this.phone,
     required this.bloodGroup,
     required this.admissionDate,
+    required this.rotation,
+    required this.consultantName,
+    required this.surgeonRole,
+    required this.operationMagnitude,
     required this.chronicDiseases,
     required this.allergies,
     required this.currentMedications,
@@ -121,6 +144,14 @@ class PatientRecord {
     required this.operationDate,
     required this.operationStatus,
     required this.operativeNotes,
+    required this.drainsInfo,
+    required this.dvtProphylaxis,
+    required this.antibioticProphylaxis,
+    required this.biopsyStatus,
+    required this.histopathologyResult,
+    required this.tnmStaging,
+    required this.isStarred,
+    required this.surgicalPearls,
     required this.finalOutcome,
     required this.clavienDindoGrade,
     required this.dischargeTreatment,
@@ -128,7 +159,14 @@ class PatientRecord {
     required this.radiologyImages,
     required this.labImages,
     required this.woundImages,
+    required this.biopsyImages,
   });
+
+  String displayName(bool anonymized) {
+    if (!anonymized) return name;
+    final code = mrn.isNotEmpty ? mrn : (id?.toString() ?? 'X');
+    return 'مريض #$code ($gender، $age سنة)';
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -140,6 +178,10 @@ class PatientRecord {
       'phone': phone,
       'bloodGroup': bloodGroup,
       'admissionDate': admissionDate,
+      'rotation': rotation,
+      'consultantName': consultantName,
+      'surgeonRole': surgeonRole,
+      'operationMagnitude': operationMagnitude,
       'chronicDiseases': chronicDiseases,
       'allergies': allergies,
       'currentMedications': currentMedications,
@@ -157,6 +199,14 @@ class PatientRecord {
       'operationDate': operationDate,
       'operationStatus': operationStatus,
       'operativeNotes': operativeNotes,
+      'drainsInfo': drainsInfo,
+      'dvtProphylaxis': dvtProphylaxis,
+      'antibioticProphylaxis': antibioticProphylaxis,
+      'biopsyStatus': biopsyStatus,
+      'histopathologyResult': histopathologyResult,
+      'tnmStaging': tnmStaging,
+      'isStarred': isStarred ? 1 : 0,
+      'surgicalPearls': surgicalPearls,
       'finalOutcome': finalOutcome,
       'clavienDindoGrade': clavienDindoGrade,
       'dischargeTreatment': dischargeTreatment,
@@ -164,6 +214,7 @@ class PatientRecord {
       'radiologyImages': jsonEncode(radiologyImages),
       'labImages': jsonEncode(labImages),
       'woundImages': jsonEncode(woundImages),
+      'biopsyImages': jsonEncode(biopsyImages),
     };
   }
 
@@ -186,6 +237,10 @@ class PatientRecord {
       phone: map['phone'] ?? '',
       bloodGroup: map['bloodGroup'] ?? 'O+',
       admissionDate: map['admissionDate'] ?? '',
+      rotation: map['rotation'] ?? 'الجراحة العامة',
+      consultantName: map['consultantName'] ?? '',
+      surgeonRole: map['surgeonRole'] ?? 'P - جراح رئيسي (Performed)',
+      operationMagnitude: map['operationMagnitude'] ?? 'Major - كبرى',
       chronicDiseases: map['chronicDiseases'] ?? '',
       allergies: map['allergies'] ?? '',
       currentMedications: map['currentMedications'] ?? '',
@@ -203,6 +258,14 @@ class PatientRecord {
       operationDate: map['operationDate'] ?? '',
       operationStatus: map['operationStatus'] ?? 'مقررة',
       operativeNotes: map['operativeNotes'] ?? '',
+      drainsInfo: map['drainsInfo'] ?? '',
+      dvtProphylaxis: map['dvtProphylaxis'] ?? 'غير محدد',
+      antibioticProphylaxis: map['antibioticProphylaxis'] ?? '',
+      biopsyStatus: map['biopsyStatus'] ?? 'لا يحتاج زرع',
+      histopathologyResult: map['histopathologyResult'] ?? '',
+      tnmStaging: map['tnmStaging'] ?? '',
+      isStarred: (map['isStarred'] == 1 || map['isStarred'] == true),
+      surgicalPearls: map['surgicalPearls'] ?? '',
       finalOutcome: map['finalOutcome'] ?? 'قيد المتابعة',
       clavienDindoGrade: map['clavienDindoGrade'] ?? 'لا يوجد (None)',
       dischargeTreatment: map['dischargeTreatment'] ?? '',
@@ -210,6 +273,7 @@ class PatientRecord {
       radiologyImages: parseList(map['radiologyImages']),
       labImages: parseList(map['labImages']),
       woundImages: parseList(map['woundImages']),
+      biopsyImages: parseList(map['biopsyImages']),
     );
   }
 }
@@ -224,7 +288,7 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('surgical_patients_v1.db');
+    _database = await _initDB('surgical_board_logbook_v2.db');
     return _database!;
   }
 
@@ -245,6 +309,10 @@ class DatabaseHelper {
         phone TEXT,
         bloodGroup TEXT,
         admissionDate TEXT,
+        rotation TEXT,
+        consultantName TEXT,
+        surgeonRole TEXT,
+        operationMagnitude TEXT,
         chronicDiseases TEXT,
         allergies TEXT,
         currentMedications TEXT,
@@ -262,13 +330,22 @@ class DatabaseHelper {
         operationDate TEXT,
         operationStatus TEXT,
         operativeNotes TEXT,
+        drainsInfo TEXT,
+        dvtProphylaxis TEXT,
+        antibioticProphylaxis TEXT,
+        biopsyStatus TEXT,
+        histopathologyResult TEXT,
+        tnmStaging TEXT,
+        isStarred INTEGER DEFAULT 0,
+        surgicalPearls TEXT,
         finalOutcome TEXT,
         clavienDindoGrade TEXT,
         dischargeTreatment TEXT,
         followUpDate TEXT,
         radiologyImages TEXT,
         labImages TEXT,
-        woundImages TEXT
+        woundImages TEXT,
+        biopsyImages TEXT
       )
     ''');
   }
@@ -317,7 +394,7 @@ class DatabaseHelper {
 }
 
 // ==========================================
-// 3. الشاشة الرئيسية ولوحة التحكم (Dashboard)
+// 3. الشاشة الرئيسية ولوحة التحكم (Dashboard & Logbook)
 // ==========================================
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -332,6 +409,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _searchQuery = '';
   String _selectedFilter = 'الكل';
   bool _isLoading = true;
+  bool _isAnonymized = false; // وضع السيمينار وإخفاء الهوية
 
   @override
   void initState() {
@@ -351,16 +429,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _applyFilters() {
     _filteredPatients = _allPatients.where((p) {
-      final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.mrn.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.diagnosis.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.plannedOperation.toLowerCase().contains(_searchQuery.toLowerCase());
+      final q = _searchQuery.toLowerCase();
+      final matchesSearch = p.name.toLowerCase().contains(q) ||
+          p.mrn.toLowerCase().contains(q) ||
+          p.diagnosis.toLowerCase().contains(q) ||
+          p.plannedOperation.toLowerCase().contains(q) ||
+          p.consultantName.toLowerCase().contains(q) ||
+          p.rotation.toLowerCase().contains(q);
 
       if (!matchesSearch) return false;
       if (_selectedFilter == 'الكل') return true;
       if (_selectedFilter == 'مقررة') return p.operationStatus == 'مقررة';
       if (_selectedFilter == 'تمت العملية') return p.operationStatus == 'تمت العملية';
       if (_selectedFilter == 'طارئة') return p.operationUrgency.contains('طارئة');
+      if (_selectedFilter == 'بانتظار الزرع 🔬') return p.biopsyStatus.contains('بانتظار');
+      if (_selectedFilter == 'حالات للامتحان ⭐') return p.isStarred;
+      if (_selectedFilter == 'جراح رئيسي (P)') return p.surgeonRole.startsWith('P');
       return true;
     }).toList();
   }
@@ -370,7 +454,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final jsonString = const JsonEncoder.withIndent('  ').convert(list);
     await Clipboard.setData(ClipboardData(text: jsonString));
     final bytes = Uint8List.fromList(utf8.encode(jsonString));
-    await Printing.sharePdf(bytes: bytes, filename: 'surgical_patients_backup.json');
+    await Printing.sharePdf(bytes: bytes, filename: 'surgical_board_backup.json');
   }
 
   void _showImportDialog() {
@@ -402,7 +486,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.pop(ctx);
                   _refreshPatients();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تم استيراد بيانات المرضى بنجاح')),
+                    const SnackBar(content: Text('تم استيراد بيانات اللوكبوك والمرضى بنجاح')),
                   );
                 }
               } catch (e) {
@@ -418,17 +502,226 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // توليد تقرير اللوكبوك الإحصائي المجمع للبورد (Consolidation Sheet PDF)
+  Future<void> _generateLogbookConsolidationPdf() async {
+    if (_filteredPatients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا توجد حالات حالياً لتصدير سجل اللوكبوك')),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+    final arabicFont = await PdfGoogleFonts.cairoRegular();
+    final arabicBold = await PdfGoogleFonts.cairoBold();
+
+    final list = _filteredPatients;
+    final total = list.length;
+    final roleP = list.where((p) => p.surgeonRole.startsWith('P')).length;
+    final roleSTS = list.where((p) => p.surgeonRole.startsWith('S-TS')).length;
+    final roleSTU = list.where((p) => p.surgeonRole.startsWith('S-TU')).length;
+    final roleA = list.where((p) => p.surgeonRole.startsWith('A')).length;
+    final emergencyCount = list.where((p) => p.operationUrgency.contains('طارئة')).length;
+    final electiveCount = total - emergencyCount;
+
+    // تجميع العمليات حسب الاسم لحساب أعداد كل عملية
+    final Map<String, Map<String, int>> opSummary = {};
+    for (var p in list) {
+      final opName = p.plannedOperation.trim().isEmpty ? 'غير محدد' : p.plannedOperation.trim();
+      opSummary.putIfAbsent(opName, () => {'total': 0, 'P': 0, 'S': 0, 'A': 0});
+      opSummary[opName]!['total'] = opSummary[opName]!['total']! + 1;
+      if (p.surgeonRole.startsWith('P')) {
+        opSummary[opName]!['P'] = opSummary[opName]!['P']! + 1;
+      } else if (p.surgeonRole.startsWith('S')) {
+        opSummary[opName]!['S'] = opSummary[opName]!['S']! + 1;
+      } else {
+        opSummary[opName]!['A'] = opSummary[opName]!['A']! + 1;
+      }
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        textDirection: pw.TextDirection.rtl,
+        theme: pw.ThemeData.withFont(base: arabicFont, bold: arabicBold),
+        build: (context) => [
+          pw.Container(
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(color: PdfColors.teal900, borderRadius: pw.BorderRadius.circular(8)),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text('السجل الجراحي الرسمي والتقرير الإحصائي (Surgical Logbook Consolidation)',
+                    style: pw.TextStyle(font: arabicBold, color: PdfColors.white, fontSize: 14)),
+                pw.SizedBox(height: 4),
+                pw.Text('تاريخ التقرير: ${DateTime.now().toString().split(' ').first} | الفلتر الحالي: $_selectedFilter | إجمالي الحالات: $total',
+                    style: pw.TextStyle(font: arabicFont, color: PdfColors.white, fontSize: 10)),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 12),
+
+          // ملخص الأدوار الجراحية
+          pw.Text('أولاً: خلاصة الأدوار الجراحية والتصنيف (Summary by Role & Urgency)',
+              style: pw.TextStyle(font: arabicBold, fontSize: 12, color: PdfColors.teal900)),
+          pw.SizedBox(height: 6),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey400),
+            children: [
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.teal50),
+                children: [
+                  _pdfCell('طارئة (Emergency)', arabicBold),
+                  _pdfCell('باردة (Elective)', arabicBold),
+                  _pdfCell('مساعد (A)', arabicBold),
+                  _pdfCell('إشراف غير مباشر (S-TU)', arabicBold),
+                  _pdfCell('إشراف مباشر (S-TS)', arabicBold),
+                  _pdfCell('جراح رئيسي (P)', arabicBold),
+                  _pdfCell('المجموع الكلي', arabicBold),
+                ],
+              ),
+              pw.TableRow(
+                children: [
+                  _pdfCell('$emergencyCount', arabicFont),
+                  _pdfCell('$electiveCount', arabicFont),
+                  _pdfCell('$roleA', arabicFont),
+                  _pdfCell('$roleSTU', arabicFont),
+                  _pdfCell('$roleSTS', arabicFont),
+                  _pdfCell('$roleP', arabicBold),
+                  _pdfCell('$total', arabicBold),
+                ],
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 14),
+
+          // جدول التجميع حسب نوع العملية
+          pw.Text('ثانياً: التجميع الإحصائي حسب نوع العملية (Consolidation by Procedure)',
+              style: pw.TextStyle(font: arabicBold, fontSize: 12, color: PdfColors.teal900)),
+          pw.SizedBox(height: 6),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey400),
+            children: [
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.teal50),
+                children: [
+                  _pdfCell('مساعد (A)', arabicBold),
+                  _pdfCell('بإشراف (S-TS/TU)', arabicBold),
+                  _pdfCell('جراح رئيسي (P)', arabicBold),
+                  _pdfCell('العدد الكلي', arabicBold),
+                  _pdfCell('اسم العملية الجراحية (Procedure)', arabicBold),
+                ],
+              ),
+              ...opSummary.entries.map((entry) {
+                return pw.TableRow(
+                  children: [
+                    _pdfCell('${entry.value['A']}', arabicFont),
+                    _pdfCell('${entry.value['S']}', arabicFont),
+                    _pdfCell('${entry.value['P']}', arabicFont),
+                    _pdfCell('${entry.value['total']}', arabicBold),
+                    _pdfCell(entry.key, arabicFont),
+                  ],
+                );
+              }),
+            ],
+          ),
+          pw.SizedBox(height: 14),
+
+          // سجل الحالات التفصيلي
+          pw.Text('ثالثاً: السجل التفصيلي للحالات (Detailed Case Log)',
+              style: pw.TextStyle(font: arabicBold, fontSize: 12, color: PdfColors.teal900)),
+          pw.SizedBox(height: 6),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey400),
+            children: [
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.teal50),
+                children: [
+                  _pdfCell('النتيجة / المضاعفات', arabicBold),
+                  _pdfCell('المشرف', arabicBold),
+                  _pdfCell('الدور / الحجم', arabicBold),
+                  _pdfCell('العملية والتشخيص', arabicBold),
+                  _pdfCell('المريض / الملف', arabicBold),
+                  _pdfCell('التاريخ', arabicBold),
+                ],
+              ),
+              ...list.map((p) {
+                final shortRole = p.surgeonRole.split(' ').first;
+                final shortMag = p.operationMagnitude.split(' ').first;
+                return pw.TableRow(
+                  children: [
+                    _pdfCell('${p.finalOutcome} (${p.clavienDindoGrade})', arabicFont),
+                    _pdfCell(p.consultantName.isEmpty ? '-' : p.consultantName, arabicFont),
+                    _pdfCell('$shortRole / $shortMag', arabicFont),
+                    _pdfCell('${p.plannedOperation}\n(${p.diagnosis})', arabicFont),
+                    _pdfCell('${p.displayName(_isAnonymized)}\nMRN: ${p.mrn}', arabicFont),
+                    _pdfCell(p.operationDate, arabicFont),
+                  ],
+                );
+              }),
+            ],
+          ),
+          pw.SizedBox(height: 24),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text('توقيع الاستشاري المشرف (Consultant Signature): ___________________',
+                  style: pw.TextStyle(font: arabicBold, fontSize: 11)),
+              pw.Text('توقيع طالب البورد (Resident Signature): ___________________',
+                  style: pw.TextStyle(font: arabicBold, fontSize: 11)),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save(), name: 'Surgical_Board_Logbook.pdf');
+  }
+
+  pw.Widget _pdfCell(String text, pw.Font font) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(4),
+      child: pw.Text(
+        text,
+        textAlign: pw.TextAlign.center,
+        style: pw.TextStyle(font: font, fontSize: 9),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final totalCount = _allPatients.length;
-    final scheduledCount = _allPatients.where((p) => p.operationStatus == 'مقررة').length;
-    final completedCount = _allPatients.where((p) => p.operationStatus == 'تمت العملية').length;
-    final emergencyCount = _allPatients.where((p) => p.operationUrgency.contains('طارئة')).length;
+    final primarySurgeonCount = _allPatients
+        .where((p) => p.surgeonRole.startsWith('P') || p.surgeonRole.startsWith('S'))
+        .length;
+    final pendingBiopsyCount = _allPatients.where((p) => p.biopsyStatus.contains('بانتظار')).length;
+    final starredCount = _allPatients.where((p) => p.isStarred).length;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('سجل مرضاي والعمليات الجراحية', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('سجل البورد الجراحي والمرضى', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
+          IconButton(
+            icon: Icon(_isAnonymized ? Icons.visibility_off : Icons.visibility),
+            tooltip: 'وضع السيمينار (إخفاء/إظهار هوية المرضى)',
+            onPressed: () {
+              setState(() => _isAnonymized = !_isAnonymized);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_isAnonymized
+                      ? 'تم تفعيل وضع السيمينار (إخفاء أسماء وأرقام المرضى)'
+                      : 'تم إيقاف وضع السيمينار (إظهار الأسماء الحقيقية)'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.analytics),
+            tooltip: 'طباعة تقرير اللوكبوك الإحصائي (Logbook PDF)',
+            onPressed: _generateLogbookConsolidationPdf,
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.import_export),
             onSelected: (val) {
@@ -444,25 +737,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
+          // شريط الإحصائيات السريعة لطالب البورد
           Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
             child: Row(
               children: [
-                _buildStatCard('إجمالي المرضى', totalCount.toString(), Colors.teal.shade700, Icons.people),
+                _buildStatCard('إجمالي الحالات', totalCount.toString(), Colors.teal.shade700, Icons.people),
                 const SizedBox(width: 8),
-                _buildStatCard('بانتظار العملية', scheduledCount.toString(), Colors.orange.shade800, Icons.schedule),
+                _buildStatCard('جراح رئيسي (P/S)', primarySurgeonCount.toString(), Colors.blue.shade800, Icons.medical_services),
                 const SizedBox(width: 8),
-                _buildStatCard('تمت الجراحة', completedCount.toString(), Colors.blue.shade700, Icons.check_circle),
+                _buildStatCard('بانتظار الزرع', pendingBiopsyCount.toString(), Colors.purple.shade700, Icons.biotech),
                 const SizedBox(width: 8),
-                _buildStatCard('حالات طارئة', emergencyCount.toString(), Colors.red.shade700, Icons.warning_amber),
+                _buildStatCard('حالات للامتحان', starredCount.toString(), Colors.amber.shade800, Icons.star),
               ],
             ),
           ),
+
+          // شريط البحث
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'ابحث باسم المريض، التشخيص، نوع العملية، أو رقم الملف...',
+                hintText: 'ابحث بالاسم، العملية، التشخيص، المشرف، أو الروتيشن...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
@@ -480,16 +776,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
           ),
+
+          // فلاتر البورد السريعة
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Row(
-              children: ['الكل', 'مقررة', 'تمت العملية', 'طارئة'].map((filter) {
+              children: [
+                'الكل',
+                'مقررة',
+                'تمت العملية',
+                'طارئة',
+                'بانتظار الزرع 🔬',
+                'حالات للامتحان ⭐',
+                'جراح رئيسي (P)',
+              ].map((filter) {
                 final isSelected = _selectedFilter == filter;
                 return Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: ChoiceChip(
-                    label: Text(filter),
+                    label: Text(filter, style: const TextStyle(fontSize: 12.5)),
                     selected: isSelected,
                     onSelected: (_) {
                       setState(() {
@@ -502,6 +808,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               }).toList(),
             ),
           ),
+
+          // قائمة المرضى
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -513,7 +821,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Icon(Icons.medical_information_outlined, size: 72, color: Colors.grey.shade400),
                             const SizedBox(height: 12),
                             const Text(
-                              'لا توجد ملفات مرضى مطابقة حالياً\nاضغط على زر (+) لإضافة ملف مريض جديد',
+                              'لا توجد حالات مطابقة للبحث أو الفلتر\nاضغط على زر (+) لإضافة حالة جديدة',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey, fontSize: 16),
                             ),
@@ -527,7 +835,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           final patient = _filteredPatients[index];
                           final totalPhotos = patient.radiologyImages.length +
                               patient.labImages.length +
-                              patient.woundImages.length;
+                              patient.woundImages.length +
+                              patient.biopsyImages.length;
+                          final shortRole = patient.surgeonRole.split(' ').first;
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 10),
@@ -538,7 +848,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => PatientDetailsScreen(patientId: patient.id!),
+                                    builder: (_) => PatientDetailsScreen(
+                                      patientId: patient.id!,
+                                      isAnonymized: _isAnonymized,
+                                    ),
                                   ),
                                 );
                                 _refreshPatients();
@@ -553,20 +866,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         CircleAvatar(
                                           backgroundColor: const Color(0xFF004D40),
                                           foregroundColor: Colors.white,
-                                          child: Text(patient.bloodGroup),
+                                          child: Text(shortRole, style: const TextStyle(fontWeight: FontWeight.bold)),
                                         ),
-                                        const SizedBox(width: 12),
+                                        const SizedBox(width: 10),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                patient.name,
-                                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                                              Row(
+                                                children: [
+                                                  if (patient.isStarred)
+                                                    const Padding(
+                                                      padding: EdgeInsets.only(left: 4),
+                                                      child: Icon(Icons.star, color: Colors.amber, size: 18),
+                                                    ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      patient.displayName(_isAnonymized),
+                                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                               Text(
-                                                'العمر: ${patient.age} | ${patient.gender} | رقم الملف: ${patient.mrn.isEmpty ? "غير محدد" : patient.mrn}',
-                                                style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                                                '${patient.rotation} | د. ${patient.consultantName.isEmpty ? "غير محدد" : patient.consultantName} | دم: ${patient.bloodGroup}',
+                                                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                                               ),
                                             ],
                                           ),
@@ -574,32 +898,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         _buildStatusBadge(patient.operationStatus),
                                       ],
                                     ),
-                                    const Divider(height: 18),
-                                    _buildInfoLine(Icons.sick_outlined, 'الشكوى والتشخيص:', '${patient.chiefComplaint} (${patient.diagnosis})'),
+                                    const Divider(height: 16),
+                                    _buildInfoLine(Icons.sick_outlined, 'التشخيص:', '${patient.diagnosis} (${patient.chiefComplaint})'),
                                     const SizedBox(height: 4),
-                                    _buildInfoLine(Icons.medical_services_outlined, 'العملية المقررة:', '${patient.plannedOperation} [${patient.operationUrgency}]'),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    _buildInfoLine(
+                                      Icons.medical_services_outlined,
+                                      'العملية:',
+                                      '${patient.plannedOperation} [${patient.operationMagnitude.split(' ').first}]',
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
                                       children: [
-                                        Expanded(
-                                          child: _buildInfoLine(Icons.verified_outlined, 'النتيجة النهائية:', patient.finalOutcome),
-                                        ),
+                                        _buildMiniChip(patient.finalOutcome, Colors.blueGrey.shade50, Colors.blueGrey.shade800),
+                                        if (patient.biopsyStatus.contains('بانتظار'))
+                                          _buildMiniChip('🔬 بانتظار الزرع النسيجي', Colors.purple.shade50, Colors.purple.shade800),
+                                        if (patient.biopsyStatus.contains('ظهرت'))
+                                          _buildMiniChip('🔬 الزرع: ${patient.histopathologyResult}', Colors.green.shade50, Colors.green.shade800),
                                         if (totalPhotos > 0)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.teal.shade50,
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(Icons.collections, size: 15, color: Colors.teal),
-                                                const SizedBox(width: 4),
-                                                Text('$totalPhotos صور مرفقة', style: const TextStyle(fontSize: 12, color: Colors.teal, fontWeight: FontWeight.bold)),
-                                              ],
-                                            ),
-                                          ),
+                                          _buildMiniChip('📷 $totalPhotos صور', Colors.teal.shade50, Colors.teal.shade800),
                                       ],
                                     ),
                                   ],
@@ -623,7 +941,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF004D40),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('إضافة مريض جديد'),
+        label: const Text('إضافة حالة جديدة'),
+      ),
+    );
+  }
+
+  Widget _buildMiniChip(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 11.5, color: fg, fontWeight: FontWeight.bold),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -663,7 +994,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(status, style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.bold)),
+      child: Text(status, style: TextStyle(color: fg, fontSize: 11.5, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -688,7 +1019,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // ==========================================
-// 4. شاشة إضافة وتعديل ملف المريض الشامل
+// 4. شاشة إضافة وتعديل ملف المريض واللوكبوك الشامل
 // ==========================================
 class PatientFormScreen extends StatefulWidget {
   final PatientRecord? existingPatient;
@@ -706,6 +1037,8 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
   late TextEditingController _ageCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _admissionDateCtrl;
+  late TextEditingController _rotationCtrl;
+  late TextEditingController _consultantCtrl;
   late TextEditingController _chronicCtrl;
   late TextEditingController _allergiesCtrl;
   late TextEditingController _medsCtrl;
@@ -718,22 +1051,33 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
   late TextEditingController _operationCtrl;
   late TextEditingController _opDateCtrl;
   late TextEditingController _opNotesCtrl;
+  late TextEditingController _drainsCtrl;
+  late TextEditingController _antibioticCtrl;
+  late TextEditingController _histoResultCtrl;
+  late TextEditingController _tnmCtrl;
+  late TextEditingController _pearlsCtrl;
   late TextEditingController _dischargeCtrl;
   late TextEditingController _followUpCtrl;
 
   String _gender = 'ذكر';
   String _bloodGroup = 'O+';
+  String _surgeonRole = 'P - جراح رئيسي (Performed)';
+  String _opMagnitude = 'Major - كبرى';
   String _smokingStatus = 'غير مدخن';
   String _urgency = 'مجدولة (باردة)';
   String _asaScore = 'ASA I';
   String _anesthesia = 'تخدير عام (GA)';
   String _opStatus = 'مقررة';
+  String _dvtProphylaxis = 'ميكانيكي + دوائي (LMWH/Heparin)';
+  String _biopsyStatus = 'لا يحتاج زرع';
+  bool _isStarred = false;
   String _finalOutcome = 'قيد المتابعة';
   String _clavienGrade = 'لا يوجد (None)';
 
   List<String> _radiologyImages = [];
   List<String> _labImages = [];
   List<String> _woundImages = [];
+  List<String> _biopsyImages = [];
 
   @override
   void initState() {
@@ -746,6 +1090,8 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
     _ageCtrl = TextEditingController(text: p?.age ?? '');
     _phoneCtrl = TextEditingController(text: p?.phone ?? '');
     _admissionDateCtrl = TextEditingController(text: p?.admissionDate ?? today);
+    _rotationCtrl = TextEditingController(text: p?.rotation ?? 'الجراحة العامة');
+    _consultantCtrl = TextEditingController(text: p?.consultantName ?? '');
     _chronicCtrl = TextEditingController(text: p?.chronicDiseases ?? '');
     _allergiesCtrl = TextEditingController(text: p?.allergies ?? '');
     _medsCtrl = TextEditingController(text: p?.currentMedications ?? '');
@@ -758,22 +1104,33 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
     _operationCtrl = TextEditingController(text: p?.plannedOperation ?? '');
     _opDateCtrl = TextEditingController(text: p?.operationDate ?? today);
     _opNotesCtrl = TextEditingController(text: p?.operativeNotes ?? '');
+    _drainsCtrl = TextEditingController(text: p?.drainsInfo ?? '');
+    _antibioticCtrl = TextEditingController(text: p?.antibioticProphylaxis ?? '');
+    _histoResultCtrl = TextEditingController(text: p?.histopathologyResult ?? '');
+    _tnmCtrl = TextEditingController(text: p?.tnmStaging ?? '');
+    _pearlsCtrl = TextEditingController(text: p?.surgicalPearls ?? '');
     _dischargeCtrl = TextEditingController(text: p?.dischargeTreatment ?? '');
     _followUpCtrl = TextEditingController(text: p?.followUpDate ?? '');
 
     if (p != null) {
       _gender = p.gender;
       _bloodGroup = p.bloodGroup;
+      _surgeonRole = p.surgeonRole;
+      _opMagnitude = p.operationMagnitude;
       _smokingStatus = p.smokingStatus;
       _urgency = p.operationUrgency;
       _asaScore = p.asaScore;
       _anesthesia = p.anesthesiaType;
       _opStatus = p.operationStatus;
+      _dvtProphylaxis = p.dvtProphylaxis;
+      _biopsyStatus = p.biopsyStatus;
+      _isStarred = p.isStarred;
       _finalOutcome = p.finalOutcome;
       _clavienGrade = p.clavienDindoGrade;
       _radiologyImages = List<String>.from(p.radiologyImages);
       _labImages = List<String>.from(p.labImages);
       _woundImages = List<String>.from(p.woundImages);
+      _biopsyImages = List<String>.from(p.biopsyImages);
     }
   }
 
@@ -819,6 +1176,10 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
       phone: _phoneCtrl.text.trim(),
       bloodGroup: _bloodGroup,
       admissionDate: _admissionDateCtrl.text.trim(),
+      rotation: _rotationCtrl.text.trim(),
+      consultantName: _consultantCtrl.text.trim(),
+      surgeonRole: _surgeonRole,
+      operationMagnitude: _opMagnitude,
       chronicDiseases: _chronicCtrl.text.trim(),
       allergies: _allergiesCtrl.text.trim(),
       currentMedications: _medsCtrl.text.trim(),
@@ -836,6 +1197,14 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
       operationDate: _opDateCtrl.text.trim(),
       operationStatus: _opStatus,
       operativeNotes: _opNotesCtrl.text.trim(),
+      drainsInfo: _drainsCtrl.text.trim(),
+      dvtProphylaxis: _dvtProphylaxis,
+      antibioticProphylaxis: _antibioticCtrl.text.trim(),
+      biopsyStatus: _biopsyStatus,
+      histopathologyResult: _histoResultCtrl.text.trim(),
+      tnmStaging: _tnmCtrl.text.trim(),
+      isStarred: _isStarred,
+      surgicalPearls: _pearlsCtrl.text.trim(),
       finalOutcome: _finalOutcome,
       clavienDindoGrade: _clavienGrade,
       dischargeTreatment: _dischargeCtrl.text.trim(),
@@ -843,6 +1212,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
       radiologyImages: _radiologyImages,
       labImages: _labImages,
       woundImages: _woundImages,
+      biopsyImages: _biopsyImages,
     );
 
     if (widget.existingPatient == null) {
@@ -858,8 +1228,13 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingPatient == null ? 'إنشاء ملف مريض جديد' : 'تعديل ملف المريض'),
+        title: Text(widget.existingPatient == null ? 'إضافة حالة جديدة للوكبوك' : 'تعديل ملف المريض'),
         actions: [
+          IconButton(
+            icon: Icon(_isStarred ? Icons.star : Icons.star_border, color: Colors.amber),
+            tooltip: 'تمييز كحالة مهمة للامتحان',
+            onPressed: () => setState(() => _isStarred = !_isStarred),
+          ),
           IconButton(icon: const Icon(Icons.save), onPressed: _savePatient),
         ],
       ),
@@ -898,39 +1273,72 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                   children: [
                     Expanded(child: _buildTextField(_phoneCtrl, 'رقم الهاتف')),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildTextField(_admissionDateCtrl, 'تاريخ المراجعة/الدخول')),
+                    Expanded(child: _buildTextField(_admissionDateCtrl, 'تاريخ الدخول')),
                   ],
                 ),
               ],
             ),
+
             _buildSectionCard(
-              title: '2. التاريخ المرضي والدوائي',
+              title: '2. بيانات اللوكبوك الجراحي (Board Logbook)',
+              icon: Icons.badge,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _buildTextField(_rotationCtrl, 'الروتيشن / الردهة (مثال: جراحة عامة، أطفال، صدر)')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildTextField(_consultantCtrl, 'اسم الاختصاصي المشرف')),
+                  ],
+                ),
+                _buildDropdown(
+                  'دورك في العملية (Surgeon Role)',
+                  _surgeonRole,
+                  [
+                    'P - جراح رئيسي (Performed)',
+                    'S-TS - بإشراف مباشر (المشرف معقم)',
+                    'S-TU - بإشراف غير مباشر (المشرف بالصالة)',
+                    'A - مساعد جراح (Assisted)',
+                  ],
+                  (v) => setState(() => _surgeonRole = v!),
+                ),
+                _buildDropdown(
+                  'حجم وتصنيف العملية (Magnitude)',
+                  _opMagnitude,
+                  [
+                    'Complex Major - كبرى معقدة',
+                    'Major - كبرى',
+                    'Intermediate - متوسطة',
+                    'Minor - صغرى',
+                  ],
+                  (v) => setState(() => _opMagnitude = v!),
+                ),
+              ],
+            ),
+
+            _buildSectionCard(
+              title: '3. التاريخ المرضي والجراحات السابقة',
               icon: Icons.history_edu,
               children: [
                 _buildTextField(_chronicCtrl, 'الأمراض المزمنة (سكري، ضغط، قلب، ربو، كلى...)', maxLines: 2),
                 _buildTextField(_allergiesCtrl, 'الحساسية الدوائية أو الغذائية'),
-                _buildTextField(_medsCtrl, 'الأدوية المستمرة (خصوصاً مميعات الدم مثل الأسبرين/الوارفارين)', maxLines: 2),
+                _buildTextField(_medsCtrl, 'الأدوية المستمرة (خصوصاً مميعات الدم والأسبرين)', maxLines: 2),
                 _buildDropdown('حالة التدخين', _smokingStatus, ['غير مدخن', 'مدخن حالي', 'مدخن سابق'], (v) => setState(() => _smokingStatus = v!)),
-              ],
-            ),
-            _buildSectionCard(
-              title: '3. الجراحات السابقة',
-              icon: Icons.healing,
-              children: [
                 _buildTextField(_pastSurgeriesCtrl, 'العمليات الجراحية السابقة وتواريخها', maxLines: 2),
-                _buildTextField(_pastCompCtrl, 'مضاعفات جراحية أو تخديرية سابقة (إن وجدت)'),
+                _buildTextField(_pastCompCtrl, 'مضاعفات جراحية أو تخديرية سابقة'),
               ],
             ),
+
             _buildSectionCard(
               title: '4. مما يعاني حالياً والتشخيص السريري',
               icon: Icons.medical_information,
               children: [
                 _buildTextField(_complaintCtrl, 'الشكوى الرئيسية (مما يعاني المريض حالياً) *', required: true, maxLines: 2),
-                _buildTextField(_examCtrl, 'نتائج الفحص السريري والعلامات الحيوية', maxLines: 2),
+                _buildTextField(_examCtrl, 'الفحص السريري والعلامات الحيوية', maxLines: 2),
                 _buildTextField(_labNotesCtrl, 'ملخص نتائج التحاليل والأشعة والسونار/المفراس', maxLines: 2),
                 _buildTextField(_diagnosisCtrl, 'التشخيص الطبي النهائي (Diagnosis) *', required: true),
               ],
             ),
+
             _buildSectionCard(
               title: '5. تفاصيل العملية الجراحية المقررة',
               icon: Icons.local_hospital,
@@ -961,7 +1369,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                   children: [
                     Expanded(
                       child: _buildDropdown(
-                        'تصنيف خطورة التخدير',
+                        'تصنيف ASA',
                         _asaScore,
                         ['ASA I', 'ASA II', 'ASA III', 'ASA IV', 'ASA V'],
                         (v) => setState(() => _asaScore = v!),
@@ -979,22 +1387,80 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                   ],
                 ),
                 _buildTextField(_opDateCtrl, 'تاريخ إجراء العملية'),
-                _buildTextField(_opNotesCtrl, 'ملاحظات الجراح وتفاصيل ما أثناء العملية (Operative Notes)', maxLines: 3),
+                _buildTextField(_opNotesCtrl, 'تفاصيل وخطوات العملية (Operative Notes & Findings)', maxLines: 3),
               ],
             ),
+
             _buildSectionCard(
-              title: '6. المرفقات الصورية (أشعة، تحاليل، وصور الجرح)',
+              title: '6. متابعة الردهة، الدرينات، والوقاية (Ward & Prophylaxis)',
+              icon: Icons.vaccines,
+              children: [
+                _buildTextField(_drainsCtrl, 'الدرينات والصوندات (النوع، العدد، المخرجات اليومية، وموعد الرفع)', maxLines: 2),
+                _buildDropdown(
+                  'الوقاية من الخثر الوريدي (DVT Prophylaxis)',
+                  _dvtProphylaxis,
+                  [
+                    'ميكانيكي + دوائي (LMWH/Heparin)',
+                    'دوائي فقط (Clexane / Heparin)',
+                    'ميكانيكي فقط (جوارب ضاغطة / حركية مبكرة)',
+                    'لا يحتاج (خطورة منخفضة)',
+                  ],
+                  (v) => setState(() => _dvtProphylaxis = v!),
+                ),
+                _buildTextField(_antibioticCtrl, 'خطة الصادات الحيوية (Antibiotic Prophylaxis & Regimen)'),
+              ],
+            ),
+
+            _buildSectionCard(
+              title: '7. متابعة الزرع النسيجي والأورام (Histopathology & TNM)',
+              icon: Icons.science,
+              children: [
+                _buildDropdown(
+                  'حالة الزرع النسيجي (Biopsy Status)',
+                  _biopsyStatus,
+                  ['لا يحتاج زرع', 'بانتظار الزرع (Pending)', 'ظهرت النتيجة (Completed)'],
+                  (v) => setState(() => _biopsyStatus = v!),
+                ),
+                _buildTextField(_histoResultCtrl, 'نتيجة الزرع النسيجي النهائية وحالة الحواف (Margins)', maxLines: 2),
+                _buildTextField(_tnmCtrl, 'تصنيف الأورام (TNM Staging) وقرار الـ MDT (إن وجد)'),
+              ],
+            ),
+
+            _buildSectionCard(
+              title: '8. ملاحظات البورد والامتحان (Surgical Pearls & Viva)',
+              icon: Icons.school,
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('تمييز كحالة مهمة للامتحان والمناقشة (⭐ Starred Case)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  value: _isStarred,
+                  onChanged: (v) => setState(() => _isStarred = v),
+                ),
+                _buildTextField(
+                  _pearlsCtrl,
+                  'الملاحظات التشريحية والدروس الجراحية المستفادة (Anatomical Variations & Viva Notes)',
+                  maxLines: 3,
+                ),
+              ],
+            ),
+
+            _buildSectionCard(
+              title: '9. الأرشيف الصوري الطبي (4 أقسام)',
               icon: Icons.camera_enhance,
               children: [
                 _buildMediaPickerSection('صور الأشعة والمفراس والرنين', _radiologyImages, 'xray'),
                 const Divider(),
                 _buildMediaPickerSection('صور التحاليل المختبرية والتقارير', _labImages, 'lab'),
                 const Divider(),
-                _buildMediaPickerSection('صور الجرح والعملية (قبل/بعد)', _woundImages, 'wound'),
+                _buildMediaPickerSection('صور الجرح والعملية (قبل/أثناء/بعد)', _woundImages, 'wound'),
+                const Divider(),
+                _buildMediaPickerSection('صور تقرير الزرع النسيجي (Histopathology)', _biopsyImages, 'biopsy'),
               ],
             ),
+
             _buildSectionCard(
-              title: '7. النتيجة النهائية وخطة الخروج',
+              title: '10. النتيجة النهائية وخطة الخروج',
               icon: Icons.fact_check,
               children: [
                 _buildDropdown(
@@ -1013,6 +1479,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 _buildTextField(_followUpCtrl, 'موعد المراجعة القادم ورفع الخيوط'),
               ],
             ),
+
             const SizedBox(height: 16),
             SizedBox(
               height: 52,
@@ -1024,7 +1491,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
                 ),
                 onPressed: _savePatient,
                 icon: const Icon(Icons.check_circle_outline),
-                label: const Text('حفظ ملف المريض بالكامل', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                label: const Text('حفظ الحالة في اللوكبوك', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 30),
@@ -1041,7 +1508,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5))),
             TextButton.icon(
               onPressed: () => _addPhoto(imagesList, prefix),
               icon: const Icon(Icons.add_a_photo, size: 18),
@@ -1110,7 +1577,9 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
               children: [
                 Icon(icon, color: const Color(0xFF004D40)),
                 const SizedBox(width: 8),
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
+                Expanded(
+                  child: Text(title, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
+                ),
               ],
             ),
             const Divider(height: 20),
@@ -1144,6 +1613,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
         value: safeValue,
+        isExpanded: true,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -1161,7 +1631,8 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
 // ==========================================
 class PatientDetailsScreen extends StatefulWidget {
   final int patientId;
-  const PatientDetailsScreen({super.key, required this.patientId});
+  final bool isAnonymized;
+  const PatientDetailsScreen({super.key, required this.patientId, this.isAnonymized = false});
 
   @override
   State<PatientDetailsScreen> createState() => _PatientDetailsScreenState();
@@ -1169,10 +1640,12 @@ class PatientDetailsScreen extends StatefulWidget {
 
 class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   PatientRecord? _patient;
+  late bool _anonymized;
 
   @override
   void initState() {
     super.initState();
+    _anonymized = widget.isAnonymized;
     _loadPatient();
   }
 
@@ -1184,6 +1657,17 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     } catch (_) {
       if (mounted) Navigator.pop(context);
     }
+  }
+
+  Future<void> _toggleStar() async {
+    if (_patient == null) return;
+    final p = _patient!;
+    final updated = PatientRecord.fromMap({
+      ...p.toMap(),
+      'isStarred': p.isStarred ? 0 : 1,
+    });
+    await DatabaseHelper.instance.updatePatient(updated);
+    _loadPatient();
   }
 
   Future<void> _quickAddImage(String category) async {
@@ -1222,16 +1706,19 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     final rad = List<String>.from(p.radiologyImages);
     final lab = List<String>.from(p.labImages);
     final wound = List<String>.from(p.woundImages);
+    final biopsy = List<String>.from(p.biopsyImages);
 
     if (category == 'xray') rad.add(path);
     if (category == 'lab') lab.add(path);
     if (category == 'wound') wound.add(path);
+    if (category == 'biopsy') biopsy.add(path);
 
     final updated = PatientRecord.fromMap({
       ...p.toMap(),
       'radiologyImages': jsonEncode(rad),
       'labImages': jsonEncode(lab),
       'woundImages': jsonEncode(wound),
+      'biopsyImages': jsonEncode(biopsy),
     });
 
     await DatabaseHelper.instance.updatePatient(updated);
@@ -1273,9 +1760,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.end,
           children: [
-            pw.Expanded(child: pw.Text(val.isEmpty ? '-' : val, textAlign: pw.TextAlign.right, style: pw.TextStyle(font: arabicFont, fontSize: 11))),
+            pw.Expanded(child: pw.Text(val.isEmpty ? '-' : val, textAlign: pw.TextAlign.right, style: pw.TextStyle(font: arabicFont, fontSize: 10.5))),
             pw.SizedBox(width: 8),
-            pw.Text(label, style: pw.TextStyle(font: arabicBold, fontSize: 11, color: PdfColors.teal900)),
+            pw.Text(label, style: pw.TextStyle(font: arabicBold, fontSize: 10.5, color: PdfColors.teal900)),
           ],
         ),
       );
@@ -1294,33 +1781,37 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text('التاريخ: ${p.admissionDate}', style: pw.TextStyle(font: arabicFont, color: PdfColors.white, fontSize: 11)),
-                pw.Text('تقرير طبي وجراحي مفصل', style: pw.TextStyle(font: arabicBold, color: PdfColors.white, fontSize: 16)),
+                pw.Text('تقرير حالة سريرية وجراحية (Case Report)', style: pw.TextStyle(font: arabicBold, color: PdfColors.white, fontSize: 15)),
               ],
             ),
           ),
-          pw.SizedBox(height: 12),
-          buildPdfRow('اسم المريض:', '${p.name} (${p.age} سنة - ${p.gender})'),
+          pw.SizedBox(height: 10),
+          buildPdfRow('المريض:', '${p.displayName(_anonymized)} (${p.age} سنة - ${p.gender})'),
           buildPdfRow('رقم الملف وفصيلة الدم:', 'MRN: ${p.mrn} | فصيلة الدم: ${p.bloodGroup}'),
+          buildPdfRow('الروتيشن والمشرف:', '${p.rotation} | الإشراف: د. ${p.consultantName}'),
+          buildPdfRow('دور الجراح وحجم العملية:', '${p.surgeonRole} | ${p.operationMagnitude}'),
           pw.Divider(),
-          buildPdfRow('الأمراض المزمنة:', p.chronicDiseases),
-          buildPdfRow('الحساسية والأدوية المستمرة:', '${p.allergies} | الأدوية: ${p.currentMedications}'),
+          buildPdfRow('الأمراض المزمنة والأدوية:', '${p.chronicDiseases} | الأدوية: ${p.currentMedications}'),
           buildPdfRow('العمليات الجراحية السابقة:', p.pastSurgeries),
           pw.Divider(),
           buildPdfRow('الشكوى الرئيسية:', p.chiefComplaint),
           buildPdfRow('الفحص السريري والتحاليل:', '${p.clinicalExam} | ${p.labRadiologyNotes}'),
-          buildPdfRow('التشخيص الطبي النهائي:', p.diagnosis),
+          buildPdfRow('التشخيص النهائي:', p.diagnosis),
           pw.Divider(),
-          buildPdfRow('العملية المقررة:', '${p.plannedOperation} (${p.operationUrgency})'),
+          buildPdfRow('العملية المجراة:', '${p.plannedOperation} (${p.operationUrgency})'),
           buildPdfRow('التخدير وتاريخ العملية:', '${p.anesthesiaType} (${p.asaScore}) - التاريخ: ${p.operationDate}'),
-          buildPdfRow('حالة العملية وملاحظات الجراح:', '${p.operationStatus} - ${p.operativeNotes}'),
+          buildPdfRow('ملاحظات العملية (Operative Notes):', p.operativeNotes),
+          buildPdfRow('الدرينات والوقاية:', 'الدرينات: ${p.drainsInfo} | الوقاية: ${p.dvtProphylaxis}'),
           pw.Divider(),
+          buildPdfRow('الزرع النسيجي و TNM:', '${p.biopsyStatus} - ${p.histopathologyResult} (${p.tnmStaging})'),
+          buildPdfRow('ملاحظات البورد (Surgical Pearls):', p.surgicalPearls),
           buildPdfRow('النتيجة النهائية:', '${p.finalOutcome} (المضاعفات: ${p.clavienDindoGrade})'),
           buildPdfRow('خطة الخروج والمراجعة:', '${p.dischargeTreatment} | المراجعة: ${p.followUpDate}'),
         ],
       ),
     );
 
-    await Printing.layoutPdf(onLayout: (format) async => pdf.save(), name: 'Patient_${p.name}.pdf');
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save(), name: 'Case_${p.mrn.isEmpty ? p.id : p.mrn}.pdf');
   }
 
   @override
@@ -1332,8 +1823,18 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(p.name),
+        title: Text(p.displayName(_anonymized)),
         actions: [
+          IconButton(
+            icon: Icon(p.isStarred ? Icons.star : Icons.star_border, color: Colors.amber),
+            tooltip: 'تمييز للامتحان',
+            onPressed: _toggleStar,
+          ),
+          IconButton(
+            icon: Icon(_anonymized ? Icons.visibility_off : Icons.visibility),
+            tooltip: 'إخفاء/إظهار الاسم',
+            onPressed: () => setState(() => _anonymized = !_anonymized),
+          ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             tooltip: 'تصدير وطباعة PDF',
@@ -1357,7 +1858,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: const Text('حذف سجل المريض'),
-                  content: const Text('هل أنت متأكد من حذف هذا السجل النهائي؟'),
+                  content: const Text('هل أنت متأكد من حذف هذا السجل نهائياً؟'),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
                     ElevatedButton(
@@ -1392,8 +1893,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          p.name,
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                          p.displayName(_anonymized),
+                          style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold),
                         ),
                       ),
                       Chip(
@@ -1404,34 +1905,84 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'العمر: ${p.age} سنة | الجنس: ${p.gender} | فصيلة الدم: ${p.bloodGroup} | ملف: ${p.mrn}',
+                    'العمر: ${p.age} سنة | ${p.gender} | دم: ${p.bloodGroup} | ملف: ${p.mrn}',
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
-                  const SizedBox(height: 4),
+                  if (!_anonymized)
+                    Text(
+                      'هاتف: ${p.phone} | تاريخ الدخول: ${p.admissionDate}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  const Divider(color: Colors.white24, height: 16),
                   Text(
-                    'هاتف: ${p.phone} | تاريخ الدخول: ${p.admissionDate}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    'الروتيشن: ${p.rotation} | المشرف: د. ${p.consultantName.isEmpty ? "غير محدد" : p.consultantName}',
+                    style: const TextStyle(color: Colors.amberAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'الدور: ${p.surgeonRole} | الحجم: ${p.operationMagnitude}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
                   ),
                 ],
               ),
             ),
           ),
+
+          // معارض الصور الأربعة
           _buildGalleryCard('صور الأشعة والمفراس والرنين (Radiology)', p.radiologyImages, 'xray', Icons.scanner),
           _buildGalleryCard('صور التحاليل المختبرية (Lab Results)', p.labImages, 'lab', Icons.biotech),
-          _buildGalleryCard('صور الجرح والعملية (Wound & Post-Op)', p.woundImages, 'wound', Icons.healing),
+          _buildGalleryCard('صور الجرح والعملية (Wound & Intra-Op)', p.woundImages, 'wound', Icons.healing),
+          _buildGalleryCard('صور تقرير الزرع النسيجي (Histopathology)', p.biopsyImages, 'biopsy', Icons.science),
+
+          if (p.surgicalPearls.isNotEmpty || p.isStarred)
+            Card(
+              color: Colors.amber.shade50,
+              margin: const EdgeInsets.only(top: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.school, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Text('ملاحظات البورد والامتحان (Surgical Pearls & Viva)',
+                            style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold, color: Colors.brown)),
+                      ],
+                    ),
+                    const Divider(),
+                    Text(p.surgicalPearls.isEmpty ? 'حالة مميزة للمراجعة الامتحانية' : p.surgicalPearls,
+                        style: const TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+
+          _buildDetailsCard('الزرع النسيجي والأورام (Histopathology & TNM)', [
+            _item('حالة الزرع النسيجي:', p.biopsyStatus),
+            _item('نتيجة الزرع والحواف (Margins):', p.histopathologyResult),
+            _item('تصنيف TNM وقرار اللجان:', p.tnmStaging),
+          ]),
+
           _buildDetailsCard('الشكوى الحالية والتشخيص', [
             _item('مما يعاني حالياً (الشكوى):', p.chiefComplaint),
             _item('الفحص السريري:', p.clinicalExam),
             _item('ملاحظات التحاليل والأشعة:', p.labRadiologyNotes),
             _item('التشخيص النهائي:', p.diagnosis),
           ]),
-          _buildDetailsCard('العملية الجراحية المقررة', [
+
+          _buildDetailsCard('العملية الجراحية ومتابعة الردهة', [
             _item('اسم ونوع العملية:', p.plannedOperation),
             _item('التصنيف والحالة:', '${p.operationUrgency} | الحالة: ${p.operationStatus}'),
             _item('التخدير وتصنيف ASA:', '${p.anesthesiaType} (${p.asaScore})'),
             _item('تاريخ العملية:', p.operationDate),
-            _item('ملاحظات العملية (Operative Notes):', p.operativeNotes),
+            _item('تفاصيل العملية (Operative Notes):', p.operativeNotes),
+            _item('متابعة الدرينات (Drains):', p.drainsInfo),
+            _item('الوقاية الخثرية (DVT Prophylaxis):', p.dvtProphylaxis),
+            _item('الصادات الحيوية (Antibiotics):', p.antibioticProphylaxis),
           ]),
+
           _buildDetailsCard('التاريخ المرضي والجراحي السابق', [
             _item('الأمراض المزمنة:', p.chronicDiseases),
             _item('الحساسية الدوائية:', p.allergies),
@@ -1440,6 +1991,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             _item('العمليات الجراحية السابقة:', p.pastSurgeries),
             _item('مضاعفات سابقة:', p.pastComplications),
           ]),
+
           _buildDetailsCard('النتيجة النهائية والمتابعة', [
             _item('النتيجة النهائية:', p.finalOutcome),
             _item('تصنيف المضاعفات (Clavien-Dindo):', p.clavienDindoGrade),
@@ -1468,7 +2020,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     children: [
                       Icon(icon, color: Colors.teal.shade800, size: 20),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                      Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5))),
                     ],
                   ),
                 ),
@@ -1481,8 +2033,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             ),
             if (paths.isEmpty)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 6),
-                child: Text('لا توجد صور مرفقة بعد — اضغط "إضافة صورة" للتصوير أو الاختيار من الاستوديو', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('لا توجد صور مرفقة — اضغط "إضافة صورة" للتصوير أو الاختيار من الاستوديو',
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey)),
               )
             else
               SizedBox(
@@ -1527,7 +2080,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(sectionTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
+            Text(sectionTitle, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
             const Divider(),
             ...items,
           ],
