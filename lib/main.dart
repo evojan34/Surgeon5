@@ -23,6 +23,22 @@ void main() async {
 }
 
 // ==========================================
+// كلاسات مساعدة لمنع حذف الأقواس أثناء النسخ من الهاتف
+// ==========================================
+class MedicalPhotoItem {
+  final String path;
+  final String cat;
+  MedicalPhotoItem({required this.path, required this.cat});
+}
+
+class OpCounter {
+  int total = 0;
+  int p = 0;
+  int s = 0;
+  int a = 0;
+}
+
+// ==========================================
 // الهوية اللونية المطابقة للتصميم (Exact Color Palette)
 // ==========================================
 class AppColors {
@@ -908,17 +924,17 @@ class _MainShellScreenState extends State<MainShellScreen> {
     final emergencyCount = list.where((p) => p.operationUrgency.contains('طارئة')).length;
     final electiveCount = total - emergencyCount;
 
-    final Map<String, Map<String, int>> opSummary = {};
+    final Map<String, OpCounter> opSummary = {};
     for (var p in list) {
       final opName = p.plannedOperation.trim().isEmpty ? 'غير محدد' : p.plannedOperation.trim();
-      opSummary.putIfAbsent(opName, () => {'total': 0, 'P': 0, 'S': 0, 'A': 0});
-      opSummary[opName]!['total'] = opSummary[opName]!['total']! + 1;
+      final counter = opSummary.putIfAbsent(opName, () => OpCounter());
+      counter.total += 1;
       if (p.surgeonRole.startsWith('P')) {
-        opSummary[opName]!['P'] = opSummary[opName]!['P']! + 1;
+        counter.p += 1;
       } else if (p.surgeonRole.startsWith('S')) {
-        opSummary[opName]!['S'] = opSummary[opName]!['S']! + 1;
+        counter.s += 1;
       } else {
-        opSummary[opName]!['A'] = opSummary[opName]!['A']! + 1;
+        counter.a += 1;
       }
     }
 
@@ -996,10 +1012,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
               ...opSummary.entries.map((entry) {
                 return pw.TableRow(
                   children: [
-                    _pdfCell('${entry.value['A']}', arabicFont),
-                    _pdfCell('${entry.value['S']}', arabicFont),
-                    _pdfCell('${entry.value['P']}', arabicFont),
-                    _pdfCell('${entry.value['total']}', arabicBold),
+                    _pdfCell('${entry.value.a}', arabicFont),
+                    _pdfCell('${entry.value.s}', arabicFont),
+                    _pdfCell('${entry.value.p}', arabicFont),
+                    _pdfCell('${entry.value.total}', arabicBold),
                     _pdfCell(entry.key, arabicFont),
                   ],
                 );
@@ -3029,11 +3045,11 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   void _openVisualComparisonTool() {
     if (_patient == null) return;
     final p = _patient!;
-    final List> allImgs = [
-      ...p.woundImages.map((e) => {'path': e, 'cat': 'جرح وعملية'}),
-      ...p.radiologyImages.map((e) => {'path': e, 'cat': 'أشعة ومفراس'}),
-      ...p.labImages.map((e) => {'path': e, 'cat': 'تحاليل'}),
-      ...p.biopsyImages.map((e) => {'path': e, 'cat': 'زرع نسيجي'}),
+    final List<MedicalPhotoItem> allImgs = [
+      ...p.woundImages.map((e) => MedicalPhotoItem(path: e, cat: 'جرح وعملية')),
+      ...p.radiologyImages.map((e) => MedicalPhotoItem(path: e, cat: 'أشعة ومفراس')),
+      ...p.labImages.map((e) => MedicalPhotoItem(path: e, cat: 'تحاليل')),
+      ...p.biopsyImages.map((e) => MedicalPhotoItem(path: e, cat: 'زرع نسيجي')),
     ];
 
     if (allImgs.length < 2) {
@@ -3646,7 +3662,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 // ==========================================
 class VisualComparisonScreen extends StatefulWidget {
   final String patientName;
-  final List> images;
+  final List<MedicalPhotoItem> images;
 
   const VisualComparisonScreen({
     super.key,
@@ -3698,8 +3714,8 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: _isSliderMode
-                  ? _buildInteractiveSliderView(beforeImg['path']!, afterImg['path']!)
-                  : _buildSideBySideView(beforeImg['path']!, afterImg['path']!),
+                  ? _buildInteractiveSliderView(beforeImg.path, afterImg.path)
+                  : _buildSideBySideView(beforeImg.path, afterImg.path),
             ),
           ),
           Container(
@@ -3903,8 +3919,8 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        File(item['path']!).existsSync()
-                            ? Image.file(File(item['path']!), fit: BoxFit.cover)
+                        File(item.path).existsSync()
+                            ? Image.file(File(item.path), fit: BoxFit.cover)
                             : const Icon(Icons.broken_image, color: Colors.white),
                         Align(
                           alignment: Alignment.bottomCenter,
@@ -3913,7 +3929,7 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
                             color: Colors.black54,
                             padding: const EdgeInsets.symmetric(vertical: 1),
                             child: Text(
-                              item['cat']!,
+                              item.cat,
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: Colors.white, fontSize: 8.5),
                             ),
