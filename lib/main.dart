@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +24,7 @@ void main() async {
 }
 
 // ==========================================
-// كلاسات مساعدة لمنع حذف الأقواس أثناء النسخ من الهاتف
+// كلاسات مساعدة آمنة للنسخ من متصفح الهاتف
 // ==========================================
 class MedicalPhotoItem {
   final String path;
@@ -38,8 +39,208 @@ class OpCounter {
   int a = 0;
 }
 
+class StudyItem {
+  final int? id;
+  final String itemType; // flashcard | summary
+  final String category;
+  final String questionOrTitle;
+  final String answerOrBody;
+  final String status; // review | mastered
+  final String createdAt;
+
+  StudyItem({
+    this.id,
+    required this.itemType,
+    required this.category,
+    required this.questionOrTitle,
+    required this.answerOrBody,
+    required this.status,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'itemType': itemType,
+      'category': category,
+      'questionOrTitle': questionOrTitle,
+      'answerOrBody': answerOrBody,
+      'status': status,
+      'createdAt': createdAt,
+    };
+  }
+
+  factory StudyItem.fromMap(Map<String, dynamic> map) {
+    return StudyItem(
+      id: map['id'] as int?,
+      itemType: map['itemType'] ?? 'flashcard',
+      category: map['category'] ?? 'الجراحة العامة',
+      questionOrTitle: map['questionOrTitle'] ?? '',
+      answerOrBody: map['answerOrBody'] ?? '',
+      status: map['status'] ?? 'review',
+      createdAt: map['createdAt'] ?? '',
+    );
+  }
+}
+
 // ==========================================
-// الهوية اللونية المطابقة للتصميم (Exact Color Palette)
+// نظام اللغات المتعددة (AR / EN / KU)
+// ==========================================
+class AppTranslator {
+  static String tr(String key, String lang) {
+    if (lang == 'en') {
+      switch (key) {
+        case 'appTitle':
+          return 'Surgical Board Logbook';
+        case 'seminar':
+          return 'Seminar';
+        case 'logbookPdf':
+          return 'Logbook PDF';
+        case 'backup':
+          return 'Cloud/Sync';
+        case 'cases':
+          return 'Cases';
+        case 'surgeonPS':
+          return 'Surgeon P/S';
+        case 'biopsy':
+          return 'Biopsy';
+        case 'exam':
+          return 'Exam ⭐';
+        case 'searchHint':
+          return 'Search by name, procedure, diagnosis, HPI, supervisor...';
+        case 'all':
+          return 'All';
+        case 'scheduled':
+          return 'Scheduled';
+        case 'completed':
+          return 'Completed';
+        case 'pendingBiopsy':
+          return 'Pending Biopsy';
+        case 'addNewCase':
+          return 'Add New Case';
+        case 'navHome':
+          return 'Home';
+        case 'navStudy':
+          return 'Study & Viva';
+        case 'navCases':
+          return 'Rotations';
+        case 'navStats':
+          return 'Analytics';
+        case 'navSettings':
+          return 'Settings';
+        case 'diagnosis':
+          return 'Diagnosis: ';
+        case 'hpiShort':
+          return 'HPI: ';
+        case 'operation':
+          return 'Operation: ';
+        default:
+          return key;
+      }
+    } else if (lang == 'ku') {
+      switch (key) {
+        case 'appTitle':
+          return 'تۆماری بۆردی نەشتەرگەری';
+        case 'seminar':
+          return 'سیمینار';
+        case 'logbookPdf':
+          return 'لۆگبووک PDF';
+        case 'backup':
+          return 'هەور/کۆپی';
+        case 'cases':
+          return 'نەخۆشەکان';
+        case 'surgeonPS':
+          return 'نەشتەرگەر P/S';
+        case 'biopsy':
+          return 'زەرع';
+        case 'exam':
+          return 'تاقیکردنەوە';
+        case 'searchHint':
+          return 'گەڕان بە ناو، نەشتەرگەری، دەستنیشانکردن، سەرپەرشتیار...';
+        case 'all':
+          return 'هەموو';
+        case 'scheduled':
+          return 'بڕیارلێدراو';
+        case 'completed':
+          return 'ئەنجامدراو';
+        case 'pendingBiopsy':
+          return 'چاوەڕوانی زەرع';
+        case 'addNewCase':
+          return 'زیادکردنی نەخۆشی نوێ';
+        case 'navHome':
+          return 'سەرەکی';
+        case 'navStudy':
+          return 'خوێندن و Viva';
+        case 'navCases':
+          return 'ڕۆتەیشن';
+        case 'navStats':
+          return 'ئامارەکان';
+        case 'navSettings':
+          return 'ڕێکخستن';
+        case 'diagnosis':
+          return 'دەستنیشانکردن: ';
+        case 'hpiShort':
+          return 'مێژووی نەخۆشی (HPI): ';
+        case 'operation':
+          return 'نەشتەرگەری: ';
+        default:
+          return key;
+      }
+    } else {
+      switch (key) {
+        case 'appTitle':
+          return 'سجل البورد الجراحي';
+        case 'seminar':
+          return 'سيمينار';
+        case 'logbookPdf':
+          return 'لوكبوك PDF';
+        case 'backup':
+          return 'نسخ';
+        case 'cases':
+          return 'الحالات';
+        case 'surgeonPS':
+          return 'جراح P/S';
+        case 'biopsy':
+          return 'الزرع';
+        case 'exam':
+          return 'امتحان';
+        case 'searchHint':
+          return 'ابحث بالاسم، العملية، التشخيص، القصة المرضية، المشرف...';
+        case 'all':
+          return 'الكل';
+        case 'scheduled':
+          return 'مقررة';
+        case 'completed':
+          return 'تمت العملية';
+        case 'pendingBiopsy':
+          return 'بانتظار الزرع';
+        case 'addNewCase':
+          return 'إضافة حالة جديدة';
+        case 'navHome':
+          return 'الرئيسية';
+        case 'navStudy':
+          return 'الدراسة 🎓';
+        case 'navCases':
+          return 'الحالات';
+        case 'navStats':
+          return 'الإحصائيات';
+        case 'navSettings':
+          return 'الإعدادات';
+        case 'diagnosis':
+          return 'التشخيص: ';
+        case 'hpiShort':
+          return 'القصة (HPI): ';
+        case 'operation':
+          return 'العملية: ';
+        default:
+          return key;
+      }
+    }
+  }
+}
+
+// ==========================================
+// الهوية اللونية والثيمات والإضاءة الخلفية
 // ==========================================
 class AppColors {
   static const Color navyDark = Color(0xFF08203E);
@@ -71,6 +272,60 @@ class AppColors {
   static const Color pillPurpleText = Color(0xFF4A2574);
 
   static const Color roleBadgeBg = Color(0xFFDCE8F8);
+
+  // الحصول على اللون الرئيسي حسب الثيم المختار
+  static Color getPrimaryColor(String palette) {
+    switch (palette) {
+      case 'emerald':
+        return const Color(0xFF005B4F);
+      case 'burgundy':
+        return const Color(0xFF6B1D2F);
+      case 'indigo':
+        return const Color(0xFF311B92);
+      default:
+        return navyPrimary;
+    }
+  }
+
+  static Color getDarkHeaderColor(String palette) {
+    switch (palette) {
+      case 'emerald':
+        return const Color(0xFF003831);
+      case 'burgundy':
+        return const Color(0xFF420E1B);
+      case 'indigo':
+        return const Color(0xFF1A0E52);
+      default:
+        return navyDark;
+    }
+  }
+
+  // الحصول على لون الإضاءة الخلفية
+  static Color getBackgroundColor(String lightMode) {
+    switch (lightMode) {
+      case 'warm':
+        return const Color(0xFFFDF8EC); // إضاءة دافئة مريحة للعين للقراءة
+      case 'dark':
+        return const Color(0xFF0F172A); // وضع ليلي داكن للمناوبات
+      default:
+        return bgLight; // نهاري قياسي
+    }
+  }
+
+  static Color getCardColor(String lightMode) {
+    switch (lightMode) {
+      case 'warm':
+        return const Color(0xFFFFFDF7);
+      case 'dark':
+        return const Color(0xFF1E293B);
+      default:
+        return Colors.white;
+    }
+  }
+
+  static Color getTextColor(String lightMode) {
+    return lightMode == 'dark' ? Colors.white : navyDark;
+  }
 }
 
 class SurgicalRegistryApp extends StatelessWidget {
@@ -92,12 +347,6 @@ class SurgicalRegistryApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        );
-      },
       home: const MainShellScreen(),
     );
   }
@@ -163,6 +412,7 @@ class PatientRecord {
   final String pastComplications;
 
   final String chiefComplaint;
+  final String hpi; // History of Present Illness (القصة المرضية التفصيلية)
   final String clinicalExam;
   final String labRadiologyNotes;
   final String diagnosis;
@@ -185,6 +435,8 @@ class PatientRecord {
 
   final bool isStarred;
   final String surgicalPearls;
+  final String vivaQuestion; // سؤال Viva على سرير المريض
+  final String vivaAnswer; // الجواب النموذجي للسؤال
 
   final String finalOutcome;
   final String clavienDindoGrade;
@@ -216,6 +468,7 @@ class PatientRecord {
     required this.pastSurgeries,
     required this.pastComplications,
     required this.chiefComplaint,
+    required this.hpi,
     required this.clinicalExam,
     required this.labRadiologyNotes,
     required this.diagnosis,
@@ -234,6 +487,8 @@ class PatientRecord {
     required this.tnmStaging,
     required this.isStarred,
     required this.surgicalPearls,
+    required this.vivaQuestion,
+    required this.vivaAnswer,
     required this.finalOutcome,
     required this.clavienDindoGrade,
     required this.dischargeTreatment,
@@ -271,6 +526,7 @@ class PatientRecord {
       'pastSurgeries': pastSurgeries,
       'pastComplications': pastComplications,
       'chiefComplaint': chiefComplaint,
+      'hpi': hpi,
       'clinicalExam': clinicalExam,
       'labRadiologyNotes': labRadiologyNotes,
       'diagnosis': diagnosis,
@@ -289,6 +545,8 @@ class PatientRecord {
       'tnmStaging': tnmStaging,
       'isStarred': isStarred ? 1 : 0,
       'surgicalPearls': surgicalPearls,
+      'vivaQuestion': vivaQuestion,
+      'vivaAnswer': vivaAnswer,
       'finalOutcome': finalOutcome,
       'clavienDindoGrade': clavienDindoGrade,
       'dischargeTreatment': dischargeTreatment,
@@ -330,6 +588,7 @@ class PatientRecord {
       pastSurgeries: map['pastSurgeries'] ?? '',
       pastComplications: map['pastComplications'] ?? '',
       chiefComplaint: map['chiefComplaint'] ?? '',
+      hpi: map['hpi'] ?? '',
       clinicalExam: map['clinicalExam'] ?? '',
       labRadiologyNotes: map['labRadiologyNotes'] ?? '',
       diagnosis: map['diagnosis'] ?? '',
@@ -348,6 +607,8 @@ class PatientRecord {
       tnmStaging: map['tnmStaging'] ?? '',
       isStarred: (map['isStarred'] == 1 || map['isStarred'] == true),
       surgicalPearls: map['surgicalPearls'] ?? '',
+      vivaQuestion: map['vivaQuestion'] ?? '',
+      vivaAnswer: map['vivaAnswer'] ?? '',
       finalOutcome: map['finalOutcome'] ?? 'شفاء تام',
       clavienDindoGrade: map['clavienDindoGrade'] ?? 'لا يوجد (None)',
       dischargeTreatment: map['dischargeTreatment'] ?? '',
@@ -361,7 +622,7 @@ class PatientRecord {
 }
 
 // ==========================================
-// 2. إدارة قاعدة البيانات المحلية + المزامنة السحابية مع Firebase
+// 2. إدارة قاعدة البيانات المحلية + جداول الدراسة والـ HPI
 // ==========================================
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -377,7 +638,12 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = p.join(dbPath, filePath);
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -402,6 +668,7 @@ class DatabaseHelper {
         pastSurgeries TEXT,
         pastComplications TEXT,
         chiefComplaint TEXT,
+        hpi TEXT,
         clinicalExam TEXT,
         labRadiologyNotes TEXT,
         diagnosis TEXT,
@@ -420,6 +687,8 @@ class DatabaseHelper {
         tnmStaging TEXT,
         isStarred INTEGER DEFAULT 0,
         surgicalPearls TEXT,
+        vivaQuestion TEXT,
+        vivaAnswer TEXT,
         finalOutcome TEXT,
         clavienDindoGrade TEXT,
         dischargeTreatment TEXT,
@@ -437,6 +706,67 @@ class DatabaseHelper {
         value TEXT
       )
     ''');
+
+    await _createStudyTableAndSeed(db);
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN hpi TEXT DEFAULT ""');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN vivaQuestion TEXT DEFAULT ""');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN vivaAnswer TEXT DEFAULT ""');
+      } catch (_) {}
+      await _createStudyTableAndSeed(db);
+    }
+  }
+
+  Future<void> _createStudyTableAndSeed(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        itemType TEXT,
+        category TEXT,
+        questionOrTitle TEXT,
+        answerOrBody TEXT,
+        status TEXT,
+        createdAt TEXT
+      )
+    ''');
+
+    final existing = await db.query('study_items');
+    if (existing.isEmpty) {
+      final today = DateTime.now().toString().split(' ').first;
+      // بطاقات Flashcards وملخصات أولية من Bailey & Love
+      await db.insert('study_items', {
+        'itemType': 'flashcard',
+        'category': 'المرارة والكبد (HPB)',
+        'questionOrTitle': 'ما هي شروط تحقيق الرؤية الحرجة للأمان (Critical View of Safety) في استئصال المرارة بالمنظار؟',
+        'answerOrBody': '1. تسليخ مثلث كالوت بالكامل من الدهون والأنسجة الليفية.\n2. فصل الجزء السفلي من المرارة (الثلث السفلي) عن سرير الكبد (Cystic Plate).\n3. التأكد من دخول هيكلين اثنين فقط إلى المرارة (القناة المرارية والشريان المراري) قبل وضع الكليبسات.',
+        'status': 'review',
+        'createdAt': today,
+      });
+      await db.insert('study_items', {
+        'itemType': 'flashcard',
+        'category': 'الغدة الدرقية والرقبة',
+        'questionOrTitle': 'ما هي حدود مثلث Beahr لتحديد العصب الحنجري الراجع (RLN) أثناء استئصال الدرقية؟',
+        'answerOrBody': '• الشريان السباتي الأصلي (Common Carotid Artery) وحشياً.\n• القصبة الهوائية (Trachea) أنسياً.\n• الشريان الدرقي السفلي (Inferior Thyroid Artery) علوياً.\nحيث يمر العصب غالباً عميقاً أو سطحياً للشريان داخل هذا المثلث.',
+        'status': 'review',
+        'createdAt': today,
+      });
+      await db.insert('study_items', {
+        'itemType': 'summary',
+        'category': 'الطوارئ والإصابات',
+        'questionOrTitle': 'استطبابات فتح البطن الاستكشافي العاجل في الطوارئ (Indications for Laparotomy)',
+        'answerOrBody': '• عدم استقرار العلامات الحيوية (Shock) مع إصابة بطنية نافذة أو كليلة وFAST إيجابي.\n• التهاب الصفاق المعمم (Generalized Peritonitis / Rigidity).\n• وجود هواء حر تحت الحجاب الحاجز (Pneumoperitoneum).\n• خروج الأحشاء (Evisceration) أو نزف معدي معوي سفلي/علوي غير مسيطر عليه.',
+        'status': 'mastered',
+        'createdAt': today,
+      });
+    }
   }
 
   Future<int> insertPatient(PatientRecord patient) async {
@@ -463,6 +793,33 @@ class DatabaseHelper {
   Future<int> deletePatient(int id) async {
     final db = await instance.database;
     return await db.delete('patients', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // دوال جدول الدراسة (Study Items)
+  Future<int> insertStudyItem(StudyItem item) async {
+    final db = await instance.database;
+    return await db.insert('study_items', item.toMap());
+  }
+
+  Future<List<StudyItem>> getAllStudyItems() async {
+    final db = await instance.database;
+    final result = await db.query('study_items', orderBy: 'id DESC');
+    return result.map((json) => StudyItem.fromMap(json)).toList();
+  }
+
+  Future<int> updateStudyItem(StudyItem item) async {
+    final db = await instance.database;
+    return await db.update(
+      'study_items',
+      item.toMap(),
+      where: 'id = ?',
+      whereArgs: [item.id],
+    );
+  }
+
+  Future<int> deleteStudyItem(int id) async {
+    final db = await instance.database;
+    return await db.delete('study_items', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> saveSetting(String key, String value) async {
@@ -509,6 +866,7 @@ class FirebaseCloudService {
     required String dbUrl,
     required String userSecretKey,
     required List<PatientRecord> patients,
+    required List<StudyItem> studyItems,
     required Map<String, String> doctorProfile,
   }) async {
     final baseUrl = _cleanUrl(dbUrl);
@@ -520,6 +878,7 @@ class FirebaseCloudService {
       'doctorProfile': doctorProfile,
       'patientsCount': patients.length,
       'patients': patients.map((e) => e.toMap()).toList(),
+      'studyItems': studyItems.map((e) => e.toMap()).toList(),
     };
 
     final client = HttpClient();
@@ -588,12 +947,29 @@ class FirebaseCloudService {
         importedCount++;
       }
     }
+
+    final rawStudy = decoded['studyItems'];
+    if (rawStudy is List) {
+      if (replaceExisting) {
+        final oldStudy = await DatabaseHelper.instance.getAllStudyItems();
+        for (var s in oldStudy) {
+          if (s.id != null) await DatabaseHelper.instance.deleteStudyItem(s.id!);
+        }
+      }
+      for (var item in rawStudy) {
+        if (item == null) continue;
+        final map = Map<String, dynamic>.from(item);
+        map.remove('id');
+        await DatabaseHelper.instance.insertStudyItem(StudyItem.fromMap(map));
+      }
+    }
+
     return importedCount;
   }
 }
 
 // ==========================================
-// 3. الهيكل الرئيسي مع الشريط السفلي الرباعي (Main Shell)
+// 3. الهيكل الرئيسي مع الشريط السفلي الخماسي (يشمل ركن الدراسة 🎓)
 // ==========================================
 class MainShellScreen extends StatefulWidget {
   const MainShellScreen({super.key});
@@ -604,19 +980,35 @@ class MainShellScreen extends StatefulWidget {
 
 class _MainShellScreenState extends State<MainShellScreen> {
   int _currentTabIndex = 0;
+  int _studySubTabIndex = 0; // 0: بطاقات | 1: أسئلة الحالات | 2: اختبر نفسك OSCE | 3: ملخصات
+
   List<PatientRecord> _allPatients = [];
   List<PatientRecord> _filteredPatients = [];
+  List<StudyItem> _studyItems = [];
+
   String _searchQuery = '';
   String _selectedFilter = 'الكل';
   bool _isLoading = true;
   bool _isAnonymized = false;
   bool _isCloudSyncing = false;
 
+  // حالة محاكي الـ OSCE
+  PatientRecord? _osceCurrentPatient;
+  bool _osceRevealAnswer = false;
+
+  // إعدادات الطبيب
   String _residentName = 'د. إيفان إحسان';
   String _residentLevel = 'البورد في الجراحة العامة';
   String _hospitalName = 'المستشفى التعليمي';
   int _boardTargetP = 100;
 
+  // إعدادات المظهر، الإضاءة الخلفية، واللغة
+  String _appLanguage = 'ar'; // ar | en | ku
+  String _themePalette = 'navy'; // navy | emerald | burgundy | indigo
+  String _lightingMode = 'light'; // light | warm | dark
+  double _bgBrightness = 1.0; // 0.45 إلى 1.0
+
+  // إعدادات Firebase
   String _firebaseDbUrl = 'https://games-242da-default-rtdb.firebaseio.com';
   String _firebaseSecretCode = 'dr_evan_board_logbook';
   String _lastCloudSync = 'لم تتم المزامنة بعد';
@@ -630,6 +1022,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
   Future<void> _loadAllData() async {
     setState(() => _isLoading = true);
     final data = await DatabaseHelper.instance.getAllPatients();
+    final sItems = await DatabaseHelper.instance.getAllStudyItems();
     final rName = await DatabaseHelper.instance.getSetting('residentName', 'د. إيفان إحسان');
     final rLevel = await DatabaseHelper.instance.getSetting('residentLevel', 'البورد في الجراحة العامة');
     final hName = await DatabaseHelper.instance.getSetting('hospitalName', 'المستشفى التعليمي');
@@ -641,8 +1034,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
     final fbCode = await DatabaseHelper.instance.getSetting('firebaseSecretCode', 'dr_evan_board_logbook');
     final lastSync = await DatabaseHelper.instance.getSetting('lastCloudSync', 'لم تتم المزامنة بعد');
 
+    final lang = await DatabaseHelper.instance.getSetting('appLanguage', 'ar');
+    final palette = await DatabaseHelper.instance.getSetting('themePalette', 'navy');
+    final lightMode = await DatabaseHelper.instance.getSetting('lightingMode', 'light');
+    final brightStr = await DatabaseHelper.instance.getSetting('bgBrightness', '1.0');
+
     setState(() {
       _allPatients = data;
+      _studyItems = sItems;
       _residentName = rName;
       _residentLevel = rLevel;
       _hospitalName = hName;
@@ -650,6 +1049,13 @@ class _MainShellScreenState extends State<MainShellScreen> {
       _firebaseDbUrl = fbUrl;
       _firebaseSecretCode = fbCode;
       _lastCloudSync = lastSync;
+      _appLanguage = lang;
+      _themePalette = palette;
+      _lightingMode = lightMode;
+      _bgBrightness = (double.tryParse(brightStr) ?? 1.0).clamp(0.45, 1.0);
+      if (_allPatients.isNotEmpty && _osceCurrentPatient == null) {
+        _osceCurrentPatient = _allPatients.first;
+      }
       _applyFilters();
       _isLoading = false;
     });
@@ -661,6 +1067,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
       final matchesSearch = p.name.toLowerCase().contains(q) ||
           p.mrn.toLowerCase().contains(q) ||
           p.diagnosis.toLowerCase().contains(q) ||
+          p.hpi.toLowerCase().contains(q) ||
           p.plannedOperation.toLowerCase().contains(q) ||
           p.consultantName.toLowerCase().contains(q) ||
           p.rotation.toLowerCase().contains(q);
@@ -675,6 +1082,187 @@ class _MainShellScreenState extends State<MainShellScreen> {
     }).toList();
   }
 
+  // نافذة سريعة للتحكم بالألوان والإضاءة الخلفية واللغة من أي مكان
+  void _showAppearanceAndLanguageSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      '🎨 تخصيص الألوان، الإضاءة الخلفية، واللغة',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.navyDark),
+                    ),
+                  ),
+                  const Divider(height: 22),
+
+                  // 1. اختيار اللغة
+                  const Text('🌐 لغة التطبيق (Language):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _choiceBtn('العربية 🇮🇶', _appLanguage == 'ar', () async {
+                        await DatabaseHelper.instance.saveSetting('appLanguage', 'ar');
+                        setState(() => _appLanguage = 'ar');
+                        setSheetState(() {});
+                      }),
+                      const SizedBox(width: 8),
+                      _choiceBtn('English 🇬🇧', _appLanguage == 'en', () async {
+                        await DatabaseHelper.instance.saveSetting('appLanguage', 'en');
+                        setState(() => _appLanguage = 'en');
+                        setSheetState(() {});
+                      }),
+                      const SizedBox(width: 8),
+                      _choiceBtn('کوردی ☀️', _appLanguage == 'ku', () async {
+                        await DatabaseHelper.instance.saveSetting('appLanguage', 'ku');
+                        setState(() => _appLanguage = 'ku');
+                        setSheetState(() {});
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. وضع الإضاءة الخلفية
+                  const Text('💡 نمط الإضاءة الخلفية (Background Lighting):',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _choiceBtn('☀️ نهاري مشرق', _lightingMode == 'light', () async {
+                        await DatabaseHelper.instance.saveSetting('lightingMode', 'light');
+                        setState(() => _lightingMode = 'light');
+                        setSheetState(() {});
+                      }),
+                      const SizedBox(width: 8),
+                      _choiceBtn('📖 دافئ للقراءة', _lightingMode == 'warm', () async {
+                        await DatabaseHelper.instance.saveSetting('lightingMode', 'warm');
+                        setState(() => _lightingMode = 'warm');
+                        setSheetState(() {});
+                      }),
+                      const SizedBox(width: 8),
+                      _choiceBtn('🌙 ليلي داكن', _lightingMode == 'dark', () async {
+                        await DatabaseHelper.instance.saveSetting('lightingMode', 'dark');
+                        setState(() => _lightingMode = 'dark');
+                        setSheetState(() {});
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // 3. شريط خفض ورفع سطوع الخلفية (Dimmer)
+                  Row(
+                    children: [
+                      const Icon(Icons.brightness_6_rounded, color: AppColors.navyPrimary, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('شدة الإضاءة:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Expanded(
+                        child: Slider(
+                          value: _bgBrightness,
+                          min: 0.45,
+                          max: 1.0,
+                          divisions: 11,
+                          label: '${(_bgBrightness * 100).round()}%',
+                          onChanged: (val) async {
+                            setState(() => _bgBrightness = val);
+                            setSheetState(() {});
+                            await DatabaseHelper.instance.saveSetting('bgBrightness', val.toString());
+                          },
+                        ),
+                      ),
+                      Text('${(_bgBrightness * 100).round()}%',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 4. ثيمات الألوان الجراحية
+                  const Text('🎨 اللون الرئيسي للتطبيق (Theme Color):',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _colorCircle('navy', 'الكحلي الملكي', const Color(0xFF0D3562), setSheetState),
+                      _colorCircle('emerald', 'الأخضر الجراحي', const Color(0xFF005B4F), setSheetState),
+                      _colorCircle('burgundy', 'العنابي الملكي', const Color(0xFF6B1D2F), setSheetState),
+                      _colorCircle('indigo', 'البنفسجي العلمي', const Color(0xFF311B92), setSheetState),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _choiceBtn(String label, bool selected, VoidCallback onTap) {
+    final primary = AppColors.getPrimaryColor(_themePalette);
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? primary : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? primary : Colors.grey.shade300),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected ? Colors.white : AppColors.navyDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _colorCircle(String key, String label, Color color, StateSetter setSheetState) {
+    final isSelected = _themePalette == key;
+    return GestureDetector(
+      onTap: () async {
+        await DatabaseHelper.instance.saveSetting('themePalette', key);
+        setState(() => _themePalette = key);
+        setSheetState(() {});
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: isSelected ? Colors.amber : Colors.transparent, width: 3),
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+            ),
+            child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 22) : null,
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
   Future<void> _performFirebaseUpload() async {
     setState(() => _isCloudSyncing = true);
     try {
@@ -682,6 +1270,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
         dbUrl: _firebaseDbUrl,
         userSecretKey: _firebaseSecretCode,
         patients: _allPatients,
+        studyItems: _studyItems,
         doctorProfile: {
           'residentName': _residentName,
           'residentLevel': _residentLevel,
@@ -696,7 +1285,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.statMintBorder,
-            content: Text('☁️ تم رفع ${_allPatients.length} حالة إلى سحابة Firebase بنجاح!'),
+            content: Text('☁️ تم رفع ${_allPatients.length} مريض و ${_studyItems.length} بطاقة دراسية إلى Firebase!'),
           ),
         );
       }
@@ -725,9 +1314,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.navyPrimary,
+            backgroundColor: AppColors.getPrimaryColor(_themePalette),
             content: Text(count > 0
-                ? '☁️ تم استرجاع $count حالة من سحابة Firebase بنجاح!'
+                ? '☁️ تم استرجاع $count حالة وبطاقات الدراسة من سحابة Firebase بنجاح!'
                 : 'لا توجد بيانات محفوظة تحت هذا الرمز في Firebase حالياً.'),
           ),
         );
@@ -770,9 +1359,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   backgroundColor: AppColors.statBlueBg,
                   child: Icon(Icons.cloud_upload, color: AppColors.statBlueBorder),
                 ),
-                title: const Text('رفع البيانات إلى سحابة Firebase الآن',
+                title: const Text('رفع الحالات وبطاقات الدراسة إلى Firebase',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('حفظ جميع حالاتك (${_allPatients.length} مريض) في حسابك السحابي'),
+                subtitle: Text('حفظ (${_allPatients.length} مريض + ${_studyItems.length} بطاقة) في حسابك السحابي'),
                 onTap: () {
                   Navigator.pop(ctx);
                   _performFirebaseUpload();
@@ -792,6 +1381,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 },
               ),
               const Divider(),
+              ListTile(
+                leading: const Icon(Icons.palette_outlined, color: AppColors.statAmberBorder),
+                title: const Text('تخصيص الألوان، الإضاءة الخلفية، واللغة'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showAppearanceAndLanguageSheet();
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.upload_file, color: AppColors.navyPrimary),
                 title: const Text('تصدير ومشاركة ملف احتياطي محلي (JSON)'),
@@ -836,7 +1433,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.navyPrimary,
+              backgroundColor: AppColors.getPrimaryColor(_themePalette),
               foregroundColor: Colors.white,
             ),
             onPressed: () {
@@ -1086,89 +1683,126 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopSurgicalHeader(),
-            if (_isCloudSyncing)
-              const LinearProgressIndicator(
-                minHeight: 3,
-                backgroundColor: AppColors.statBlueBg,
-                color: AppColors.statMintBorder,
-              ),
-            Expanded(
-              child: IndexedStack(
-                index: _currentTabIndex,
+    final isRtl = _appLanguage != 'en';
+    final bgColor = AppColors.getBackgroundColor(_lightingMode);
+    final dimOverlayOpacity = (1.0 - _bgBrightness).clamp(0.0, 0.55);
+
+    return Directionality(
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: bgColor,
+            body: SafeArea(
+              child: Column(
                 children: [
-                  _buildMainDashboardTab(),
-                  _buildCasesByRotationTab(),
-                  _buildStatisticsAnalyticsTab(),
-                  _buildSettingsProfileTab(),
+                  _buildTopSurgicalHeader(),
+                  if (_isCloudSyncing)
+                    const LinearProgressIndicator(
+                      minHeight: 3,
+                      backgroundColor: AppColors.statBlueBg,
+                      color: AppColors.statMintBorder,
+                    ),
+                  Expanded(
+                    child: IndexedStack(
+                      index: _currentTabIndex,
+                      children: [
+                        _buildMainDashboardTab(),
+                        _buildStudyAndVivaHubTab(),
+                        _buildCasesByRotationTab(),
+                        _buildStatisticsAnalyticsTab(),
+                        _buildSettingsProfileTab(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+            bottomNavigationBar: _buildCustomBottomNavBar(),
+          ),
+          // طبقة التحكم بشدة الإضاءة الخلفية (Dimmer Overlay) لراحة العين ليلاً
+          if (dimOverlayOpacity > 0.01)
+            IgnorePointer(
+              child: Container(
+                color: Colors.black.withOpacity(dimOverlayOpacity),
+              ),
+            ),
+        ],
       ),
-      bottomNavigationBar: _buildCustomBottomNavBar(),
     );
   }
 
   Widget _buildTopSurgicalHeader() {
+    final primary = AppColors.getPrimaryColor(_themePalette);
+    final darkHeader = AppColors.getDarkHeaderColor(_themePalette);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 16, 16),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(12, 14, 14, 16),
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF061A33),
-            Color(0xFF0D325E),
-            Color(0xFF164A84),
+            darkHeader,
+            primary,
+            primary.withOpacity(0.88),
           ],
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(26),
           bottomRight: Radius.circular(26),
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Text(
-                  'سجل البورد الجراحي',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.3,
+            child: GestureDetector(
+              onTap: _showAppearanceAndLanguageSheet,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          AppTranslator.tr('appTitle', _appLanguage),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.brightness_6_rounded, color: Colors.amberAccent, size: 18),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 20,
-                  width: 170,
-                  child: CustomPaint(painter: EcgWavePainter()),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 20,
+                    width: 165,
+                    child: CustomPaint(painter: EcgWavePainter()),
+                  ),
+                ],
+              ),
             ),
           ),
           Container(
             height: 46,
             width: 1.5,
-            margin: const EdgeInsets.symmetric(horizontal: 10),
+            margin: const EdgeInsets.symmetric(horizontal: 8),
             color: Colors.white38,
           ),
           _buildHeaderSquareButton(
-            label: 'سيمينار',
+            label: AppTranslator.tr('seminar', _appLanguage),
             iconWidget: Icon(
               _isAnonymized ? Icons.visibility_off_outlined : Icons.visibility_outlined,
               color: Colors.white,
@@ -1186,9 +1820,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
               );
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           _buildHeaderSquareButton(
-            label: 'لوكبوك PDF',
+            label: AppTranslator.tr('logbookPdf', _appLanguage),
             iconWidget: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
@@ -1202,9 +1836,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
             ),
             onTap: _generateLogbookConsolidationPdf,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           _buildHeaderSquareButton(
-            label: 'نسخ',
+            label: AppTranslator.tr('backup', _appLanguage),
             iconWidget: const Icon(Icons.copy_all_rounded, color: Colors.white, size: 22),
             onTap: _showBackupMenu,
           ),
@@ -1222,8 +1856,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
-        width: 64,
-        height: 60,
+        width: 62,
+        height: 58,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.12),
           borderRadius: BorderRadius.circular(14),
@@ -1236,7 +1870,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1246,6 +1880,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
+  // ==========================================
+  // التبويب الأول: الشاشة الرئيسية (Dashboard)
+  // ==========================================
   Widget _buildMainDashboardTab() {
     final totalCount = _allPatients.length;
     final primarySurgeonCount = _allPatients
@@ -1253,6 +1890,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
         .length;
     final pendingBiopsyCount = _allPatients.where((p) => p.biopsyStatus.contains('بانتظار')).length;
     final starredCount = _allPatients.where((p) => p.isStarred).length;
+    final primaryColor = AppColors.getPrimaryColor(_themePalette);
 
     return Column(
       children: [
@@ -1264,7 +1902,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 children: [
                   _buildColoredStatCard(
                     count: totalCount.toString(),
-                    label: 'الحالات',
+                    label: AppTranslator.tr('cases', _appLanguage),
                     bgColor: AppColors.statPurpleBg,
                     bottomBorderColor: AppColors.statPurpleBorder,
                     icon: Icons.groups_rounded,
@@ -1277,7 +1915,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   const SizedBox(width: 8),
                   _buildColoredStatCard(
                     count: primarySurgeonCount.toString(),
-                    label: 'جراح P/S',
+                    label: AppTranslator.tr('surgeonPS', _appLanguage),
                     bgColor: AppColors.statBlueBg,
                     bottomBorderColor: AppColors.statBlueBorder,
                     icon: Icons.colorize_rounded,
@@ -1290,7 +1928,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   const SizedBox(width: 8),
                   _buildColoredStatCard(
                     count: pendingBiopsyCount.toString(),
-                    label: 'الزرع',
+                    label: AppTranslator.tr('biopsy', _appLanguage),
                     bgColor: AppColors.statMintBg,
                     bottomBorderColor: AppColors.statMintBorder,
                     icon: Icons.biotech_rounded,
@@ -1303,7 +1941,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   const SizedBox(width: 8),
                   _buildColoredStatCard(
                     count: starredCount.toString(),
-                    label: 'امتحان',
+                    label: AppTranslator.tr('exam', _appLanguage),
                     bgColor: AppColors.statAmberBg,
                     bottomBorderColor: AppColors.statAmberBorder,
                     icon: Icons.star_rounded,
@@ -1318,7 +1956,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               const SizedBox(height: 14),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.getCardColor(_lightingMode),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(color: Colors.blueGrey.shade100),
                   boxShadow: [
@@ -1330,10 +1968,11 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ],
                 ),
                 child: TextField(
+                  style: TextStyle(color: AppColors.getTextColor(_lightingMode)),
                   decoration: InputDecoration(
-                    hintText: 'ابحث بالاسم، العملية، التشخيص، المشرف، الروتيشن ...',
-                    hintStyle: TextStyle(color: Colors.blueGrey.shade400, fontSize: 13.5),
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navyPrimary, size: 24),
+                    hintText: AppTranslator.tr('searchHint', _appLanguage),
+                    hintStyle: TextStyle(color: Colors.blueGrey.shade400, fontSize: 13),
+                    prefixIcon: Icon(Icons.search_rounded, color: primaryColor, size: 24),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                   ),
@@ -1351,31 +1990,36 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 child: Row(
                   children: [
                     _buildFilterPill(
-                      label: 'الكل',
+                      filterKey: 'الكل',
+                      displayLabel: AppTranslator.tr('all', _appLanguage),
                       icon: Icons.grid_view_rounded,
-                      iconColor: _selectedFilter == 'الكل' ? Colors.white : AppColors.navyPrimary,
+                      iconColor: _selectedFilter == 'الكل' ? Colors.white : primaryColor,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterPill(
-                      label: 'مقررة',
+                      filterKey: 'مقررة',
+                      displayLabel: AppTranslator.tr('scheduled', _appLanguage),
                       icon: Icons.calendar_month_rounded,
-                      iconColor: _selectedFilter == 'مقررة' ? Colors.white : AppColors.navyPrimary,
+                      iconColor: _selectedFilter == 'مقررة' ? Colors.white : primaryColor,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterPill(
-                      label: 'تمت العملية',
+                      filterKey: 'تمت العملية',
+                      displayLabel: AppTranslator.tr('completed', _appLanguage),
                       icon: Icons.check_circle_rounded,
                       iconColor: _selectedFilter == 'تمت العملية' ? Colors.white : const Color(0xFF00A86B),
                     ),
                     const SizedBox(width: 8),
                     _buildFilterPill(
-                      label: 'بانتظار الزرع',
+                      filterKey: 'بانتظار الزرع',
+                      displayLabel: AppTranslator.tr('pendingBiopsy', _appLanguage),
                       icon: Icons.biotech_rounded,
                       iconColor: _selectedFilter == 'بانتظار الزرع' ? Colors.white : AppColors.statPurpleBorder,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterPill(
-                      label: 'امتحان',
+                      filterKey: 'امتحان',
+                      displayLabel: AppTranslator.tr('exam', _appLanguage),
                       icon: Icons.star_rounded,
                       iconColor: _selectedFilter == 'امتحان' ? Colors.white : AppColors.statAmberBorder,
                     ),
@@ -1392,7 +2036,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.getCardColor(_lightingMode),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
@@ -1430,13 +2074,16 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF072549), Color(0xFF104076)],
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.getDarkHeaderColor(_themePalette),
+                        primaryColor,
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.navyPrimary.withOpacity(0.35),
+                        color: primaryColor.withOpacity(0.35),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -1452,12 +2099,12 @@ class _MainShellScreenState extends State<MainShellScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.add, color: AppColors.navyDark, size: 22),
+                        child: Icon(Icons.add, color: primaryColor, size: 22),
                       ),
                       const SizedBox(width: 10),
-                      const Text(
-                        'إضافة حالة جديدة',
-                        style: TextStyle(
+                      Text(
+                        AppTranslator.tr('addNewCase', _appLanguage),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 15.5,
                           fontWeight: FontWeight.bold,
@@ -1521,7 +2168,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: FontWeight.bold,
                   color: AppColors.navyDark,
                 ),
@@ -1536,30 +2183,32 @@ class _MainShellScreenState extends State<MainShellScreen> {
   }
 
   Widget _buildFilterPill({
-    required String label,
+    required String filterKey,
+    required String displayLabel,
     required IconData icon,
     required Color iconColor,
   }) {
-    final isSelected = _selectedFilter == label;
+    final isSelected = _selectedFilter == filterKey;
+    final primary = AppColors.getPrimaryColor(_themePalette);
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedFilter = label;
+          _selectedFilter = filterKey;
           _applyFilters();
         });
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.navyPrimary : Colors.white,
+          color: isSelected ? primary : AppColors.getCardColor(_lightingMode),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? AppColors.navyPrimary : Colors.blueGrey.shade100,
+            color: isSelected ? primary : Colors.blueGrey.shade100,
           ),
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppColors.navyPrimary.withOpacity(0.25),
+                color: primary.withOpacity(0.25),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -1571,9 +2220,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
             Icon(icon, size: 17, color: iconColor),
             const SizedBox(width: 6),
             Text(
-              label,
+              displayLabel,
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.navyDark,
+                color: isSelected ? Colors.white : AppColors.getTextColor(_lightingMode),
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -1591,14 +2240,16 @@ class _MainShellScreenState extends State<MainShellScreen> {
         patient.biopsyImages.length;
     final shortRole = patient.surgeonRole.split(' ').first;
     final shortMag = patient.operationMagnitude.split(' ').first;
+    final primary = AppColors.getPrimaryColor(_themePalette);
+    final textColor = AppColors.getTextColor(_lightingMode);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardColor(_lightingMode),
         borderRadius: BorderRadius.circular(20),
-        border: const Border(
-          right: BorderSide(color: AppColors.navyPrimary, width: 5),
+        border: Border(
+          right: BorderSide(color: primary, width: 5),
         ),
         boxShadow: [
           BoxShadow(
@@ -1638,10 +2289,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                         Flexible(
                           child: Text(
                             patient.displayName(_isAnonymized),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17.5,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.navyDark,
+                              color: textColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1677,8 +2328,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
               Center(
                 child: Text(
                   '${patient.rotation}   |   د. ${patient.consultantName.isEmpty ? "غير محدد" : patient.consultantName}   |   دم: ${patient.bloodGroup}',
-                  style: const TextStyle(
-                    color: AppColors.navyDark,
+                  style: TextStyle(
+                    color: textColor.withOpacity(0.85),
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1691,22 +2342,22 @@ class _MainShellScreenState extends State<MainShellScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.medical_information_outlined, size: 19, color: AppColors.navyAccent),
+                  Icon(Icons.medical_information_outlined, size: 19, color: primary),
                   const SizedBox(width: 6),
-                  const Text(
-                    'التشخيص: ',
+                  Text(
+                    AppTranslator.tr('diagnosis', _appLanguage),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.navyAccent,
+                      color: primary,
                     ),
                   ),
                   Expanded(
                     child: Text(
                       '${patient.diagnosis} (${patient.chiefComplaint})',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.navyDark,
+                        color: textColor,
                         fontWeight: FontWeight.w500,
                       ),
                       maxLines: 1,
@@ -1715,26 +2366,55 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ),
                 ],
               ),
+              if (patient.hpi.trim().isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.subject_rounded, size: 18, color: Colors.teal.shade700),
+                    const SizedBox(width: 6),
+                    Text(
+                      AppTranslator.tr('hpiShort', _appLanguage),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.teal.shade700,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        patient.hpi,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textColor.withOpacity(0.85),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 6),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.colorize_rounded, size: 19, color: AppColors.navyAccent),
+                  Icon(Icons.colorize_rounded, size: 19, color: primary),
                   const SizedBox(width: 6),
-                  const Text(
-                    'العملية: ',
+                  Text(
+                    AppTranslator.tr('operation', _appLanguage),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.navyAccent,
+                      color: primary,
                     ),
                   ),
                   Expanded(
                     child: Text(
                       '${patient.plannedOperation} [$shortMag]',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.navyDark,
+                        color: textColor,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
@@ -1852,6 +2532,558 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
+  // ==========================================
+  // التبويب الثاني الجديد: ركن الدراسة والـ Viva لطالب البورد 🎓
+  // ==========================================
+  Widget _buildStudyAndVivaHubTab() {
+    final primary = AppColors.getPrimaryColor(_themePalette);
+    final flashcards = _studyItems.where((e) => e.itemType == 'flashcard').toList();
+    final summaries = _studyItems.where((e) => e.itemType == 'summary').toList();
+    final caseVivas = _allPatients.where((p) => p.vivaQuestion.trim().isNotEmpty || p.surgicalPearls.trim().isNotEmpty).toList();
+
+    return Column(
+      children: [
+        // شريط الأقسام الأربعة لركن الدراسة
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildStudySubTabChip(0, '🃏 بطاقات سريعة (${flashcards.length})', Icons.style_outlined),
+                const SizedBox(width: 8),
+                _buildStudySubTabChip(1, '🛏️ أسئلة الحالات (${caseVivas.length})', Icons.question_answer_outlined),
+                const SizedBox(width: 8),
+                _buildStudySubTabChip(2, '🩺 اختبر نفسك (OSCE)', Icons.quiz_outlined),
+                const SizedBox(width: 8),
+                _buildStudySubTabChip(3, '📚 ملخصات المراجع (${summaries.length})', Icons.menu_book_rounded),
+              ],
+            ),
+          ),
+        ),
+
+        Expanded(
+          child: IndexedStack(
+            index: _studySubTabIndex,
+            children: [
+              _buildFlashcardsSubView(flashcards, primary),
+              _buildCaseVivaSubView(caseVivas, primary),
+              _buildOsceSimulatorSubView(primary),
+              _buildSummariesSubView(summaries, primary),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStudySubTabChip(int index, String label, IconData icon) {
+    final isSelected = _studySubTabIndex == index;
+    final primary = AppColors.getPrimaryColor(_themePalette);
+    return GestureDetector(
+      onTap: () => setState(() => _studySubTabIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected ? primary : AppColors.getCardColor(_lightingMode),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: isSelected ? primary : Colors.blueGrey.shade100),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: isSelected ? Colors.white : primary),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.getTextColor(_lightingMode),
+                fontWeight: FontWeight.bold,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 1. قسم البطاقات التفاعلية (Flashcards)
+  Widget _buildFlashcardsSubView(List<StudyItem> flashcards, Color primary) {
+    final masteredCount = flashcards.where((e) => e.status == 'mastered').length;
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.statPurpleBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('بطاقات المراجعة السريعة (Bailey & Love / Viva)',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyDark)),
+                  Text('المتقن: $masteredCount من أصل ${flashcards.length} بطاقة',
+                      style: const TextStyle(fontSize: 12.5, color: AppColors.statPurpleBorder)),
+                ],
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.statPurpleBorder,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _showAddStudyItemDialog('flashcard'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('سؤال جديد'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (flashcards.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(child: Text('لا توجد بطاقات بعد — اضغط "سؤال جديد" لإضافة أول بطاقة')),
+          )
+        else
+          ...flashcards.map((item) => _FlashcardInteractiveWidget(
+                item: item,
+                cardBgColor: AppColors.getCardColor(_lightingMode),
+                textColor: AppColors.getTextColor(_lightingMode),
+                onStatusToggle: (newStatus) async {
+                  final updated = StudyItem(
+                    id: item.id,
+                    itemType: item.itemType,
+                    category: item.category,
+                    questionOrTitle: item.questionOrTitle,
+                    answerOrBody: item.answerOrBody,
+                    status: newStatus,
+                    createdAt: item.createdAt,
+                  );
+                  await DatabaseHelper.instance.updateStudyItem(updated);
+                  _loadAllData();
+                },
+                onDelete: () async {
+                  if (item.id != null) {
+                    await DatabaseHelper.instance.deleteStudyItem(item.id!);
+                    _loadAllData();
+                  }
+                },
+              )),
+      ],
+    );
+  }
+
+  // 2. قسم أسئلة الحالات (Case-Based Viva) المجمعة تلقائياً من ملفات المرضى
+  Widget _buildCaseVivaSubView(List<PatientRecord> caseVivas, Color primary) {
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.statAmberBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('🛏️ بنك أسئلة الردهة والعمليات (المرتبطة بمرضاك)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: AppColors.navyDark)),
+              SizedBox(height: 4),
+              Text(
+                'أي سؤال أو ملاحظة امتحانية تكتبها داخل ملف أي مريض تظهر هنا تلقائياً مع تشخيص المريض وقصته المرضية لتراجعها قبل الامتحان.',
+                style: TextStyle(fontSize: 12, color: AppColors.pillOrangeText),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (caseVivas.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+              child: Text(
+                'لم تقم بتسجيل أسئلة Viva داخل ملفات المرضى بعد.\nعند إضافة أو تعديل أي مريض، اكتب السؤال في قسم (ملاحظات البورد وسؤال الـ Viva) ليظهر هنا.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.blueGrey),
+              ),
+            ),
+          )
+        else
+          ...caseVivas.map((p) => Card(
+                color: AppColors.getCardColor(_lightingMode),
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${p.displayName(_isAnonymized)} — ${p.diagnosis}',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 14),
+                            ),
+                          ),
+                          Chip(
+                            label: Text(p.plannedOperation, style: const TextStyle(fontSize: 11)),
+                            backgroundColor: AppColors.statBlueBg,
+                          ),
+                        ],
+                      ),
+                      if (p.vivaQuestion.trim().isNotEmpty) ...[
+                        const Divider(),
+                        Text('❓ السؤال: ${p.vivaQuestion}',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: AppColors.getTextColor(_lightingMode))),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.pillGreenBg.withOpacity(0.55),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '💡 الجواب النموذجي: ${p.vivaAnswer.isEmpty ? "لم يسجل جواب بعد" : p.vivaAnswer}',
+                            style: const TextStyle(fontSize: 13, color: AppColors.pillGreenText, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                      if (p.surgicalPearls.trim().isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text('📌 ملاحظة البورد: ${p.surgicalPearls}',
+                            style: TextStyle(fontSize: 13, color: AppColors.getTextColor(_lightingMode))),
+                      ],
+                    ],
+                  ),
+                ),
+              )),
+      ],
+    );
+  }
+
+  // 3. قسم اختبر نفسك من حالاتك الحقيقية (OSCE Case Simulator)
+  Widget _buildOsceSimulatorSubView(Color primary) {
+    if (_allPatients.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(28),
+          child: Text(
+            'أضف حالة مريض واحدة على الأقل في التطبيق ليعمل محاكي الـ OSCE التفاعلي من حالاتك الحقيقية.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.blueGrey),
+          ),
+        ),
+      );
+    }
+
+    final p = _osceCurrentPatient ?? _allPatients.first;
+
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.statBlueBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('🩺 محاكي الـ OSCE والـ Viva السريري',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyDark)),
+                    Text('اقرأ معطيات المريض وحاول معرفة التشخيص والعملية قبل كشف الجواب',
+                        style: TextStyle(fontSize: 11.5, color: AppColors.navyPrimary)),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  final rnd = Random();
+                  setState(() {
+                    _osceCurrentPatient = _allPatients[rnd.nextInt(_allPatients.length)];
+                    _osceRevealAnswer = false;
+                  });
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('حالة عشوائية'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          color: AppColors.getCardColor(_lightingMode),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'المعطيات السريرية: (${p.gender}، العمر: ${p.age} سنة — الروتيشن: ${p.rotation})',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: primary),
+                ),
+                const Divider(height: 20),
+                _osceLine('الشكوى الرئيسية (Chief Complaint):', p.chiefComplaint),
+                _osceLine('القصة المرضية التفصيلية (HPI):', p.hpi.isEmpty ? 'لم تسجل تفاصيل إضافية' : p.hpi),
+                _osceLine('التاريخ المرضي والجراحي:', '${p.chronicDiseases} | جراحات سابقة: ${p.pastSurgeries}'),
+                _osceLine('الفحص السريري (Clinical Exam):', p.clinicalExam),
+                _osceLine('نتائج التحاليل والأشعة:', p.labRadiologyNotes),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _osceRevealAnswer ? Colors.orange.shade800 : AppColors.statMintBorder,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () => setState(() => _osceRevealAnswer = !_osceRevealAnswer),
+                    icon: Icon(_osceRevealAnswer ? Icons.visibility_off : Icons.lightbulb_outline),
+                    label: Text(
+                      _osceRevealAnswer ? 'إخفاء الجواب' : 'كشف التشخيص والقرار الجراحي الحقيقي',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                    ),
+                  ),
+                ),
+                if (_osceRevealAnswer) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.pillGreenBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.statMintBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('✅ التشخيص النهائي: ${p.diagnosis}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.pillGreenText)),
+                        const SizedBox(height: 6),
+                        Text('🔪 العملية المجراة: ${p.plannedOperation} (${p.operationUrgency})',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.navyDark)),
+                        if (p.operativeNotes.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text('📋 مشاهدات العملية: ${p.operativeNotes}', style: const TextStyle(fontSize: 13)),
+                        ],
+                        if (p.vivaQuestion.isNotEmpty) ...[
+                          const Divider(),
+                          Text('❓ سؤال الـ Viva على هذه الحالة: ${p.vivaQuestion}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('💡 الجواب: ${p.vivaAnswer}', style: const TextStyle(fontSize: 13)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _osceLine(String title, String val) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey)),
+          Text(
+            val.trim().isEmpty ? '-' : val,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.getTextColor(_lightingMode)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. قسم ملخصات المراجع السريعة (Topic Summaries)
+  Widget _buildSummariesSubView(List<StudyItem> summaries, Color primary) {
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.statMintBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('📚 ملخصات المواضيع وقوائم المراجعة',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyDark)),
+                    Text('رؤوس أقلام سريعة للاستطبابات والخطوات الجراحية',
+                        style: TextStyle(fontSize: 12, color: AppColors.pillGreenText)),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.statMintBorder,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _showAddStudyItemDialog('summary'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('ملخص جديد'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...summaries.map((s) => Card(
+              color: AppColors.getCardColor(_lightingMode),
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ExpansionTile(
+                leading: const Icon(Icons.menu_book_rounded, color: AppColors.statMintBorder),
+                title: Text(s.questionOrTitle,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.getTextColor(_lightingMode))),
+                subtitle: Text(s.category, style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                  onPressed: () async {
+                    if (s.id != null) {
+                      await DatabaseHelper.instance.deleteStudyItem(s.id!);
+                      _loadAllData();
+                    }
+                  },
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        s.answerOrBody,
+                        style: TextStyle(fontSize: 13.5, height: 1.5, color: AppColors.getTextColor(_lightingMode)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+      ],
+    );
+  }
+
+  void _showAddStudyItemDialog(String type) {
+    final isFlash = type == 'flashcard';
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    String selectedCat = 'المرارة والكبد (HPB)';
+    final categories = [
+      'المرارة والكبد (HPB)',
+      'الغدة الدرقية والرقبة',
+      'جراحة الثدي والغدد',
+      'الجهاز الهضمي والقولون (GIT)',
+      'الفتوق وجدار البطن',
+      'الطوارئ والإصابات (Trauma)',
+      'الجراحة العامة والعناية المركزة',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: Text(isFlash ? 'إضافة بطاقة سؤال وجواب (Flashcard)' : 'إضافة ملخص جراحي سريع'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedCat,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'الفصل / التصنيف الجراحي', border: OutlineInputBorder()),
+                  items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (v) => setDlgState(() => selectedCat = v!),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: titleCtrl,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: isFlash ? 'السؤال (Question)' : 'عنوان الملخص / الموضوع',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: bodyCtrl,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: isFlash ? 'الجواب النموذجي (Answer)' : 'النقاط الأساسية والمحتوى',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.getPrimaryColor(_themePalette),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                if (titleCtrl.text.trim().isEmpty) return;
+                await DatabaseHelper.instance.insertStudyItem(
+                  StudyItem(
+                    itemType: type,
+                    category: selectedCat,
+                    questionOrTitle: titleCtrl.text.trim(),
+                    answerOrBody: bodyCtrl.text.trim(),
+                    status: 'review',
+                    createdAt: DateTime.now().toString().split(' ').first,
+                  ),
+                );
+                if (mounted) {
+                  Navigator.pop(ctx);
+                  _loadAllData();
+                }
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // التبويب الثالث: الحالات حسب الروتيشن
+  // ==========================================
   Widget _buildCasesByRotationTab() {
     final Map<String, List<PatientRecord>> grouped = {};
     for (var p in _allPatients) {
@@ -1869,13 +3101,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
     return ListView(
       padding: const EdgeInsets.all(14),
       children: [
-        const Text(
+        Text(
           'أرشيف الحالات مقسماً حسب الروتيشن الجراحي',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.navyDark),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.getTextColor(_lightingMode)),
         ),
         const SizedBox(height: 10),
         ...grouped.entries.map((entry) {
           return Card(
+            color: AppColors.getCardColor(_lightingMode),
             margin: const EdgeInsets.only(bottom: 10),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ExpansionTile(
@@ -1884,15 +3117,18 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 child: Text('${entry.value.length}',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyPrimary)),
               ),
-              title: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(entry.key,
+                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.getTextColor(_lightingMode))),
               subtitle: Text(
                 'جراح رئيسي (P): ${entry.value.where((e) => e.surgeonRole.startsWith("P")).length} | بإشراف (S): ${entry.value.where((e) => e.surgeonRole.startsWith("S")).length}',
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
               ),
               children: entry.value.map((p) {
                 return ListTile(
-                  title: Text(p.displayName(_isAnonymized), style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${p.plannedOperation} — ${p.diagnosis}'),
+                  title: Text(p.displayName(_isAnonymized),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.getTextColor(_lightingMode))),
+                  subtitle: Text('${p.plannedOperation} — ${p.diagnosis}',
+                      style: const TextStyle(color: Colors.blueGrey)),
                   trailing: Text(p.operationDate, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   onTap: () async {
                     await Navigator.push(
@@ -1912,6 +3148,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
+  // ==========================================
+  // التبويب الرابع: الإحصائيات
+  // ==========================================
   Widget _buildStatisticsAnalyticsTab() {
     final total = _allPatients.length;
     final pCount = _allPatients.where((p) => p.surgeonRole.startsWith('P')).length;
@@ -1924,6 +3163,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
     final minor = _allPatients.where((p) => p.operationMagnitude.contains('Minor')).length;
 
     final progress = (_boardTargetP > 0) ? (pCount / _boardTargetP).clamp(0.0, 1.0) : 0.0;
+    final cardColor = AppColors.getCardColor(_lightingMode);
+    final textColor = AppColors.getTextColor(_lightingMode);
 
     return ListView(
       padding: const EdgeInsets.all(14),
@@ -1931,21 +3172,21 @@ class _MainShellScreenState extends State<MainShellScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(18),
             border: const Border(right: BorderSide(color: AppColors.statBlueBorder, width: 5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('مؤشر إنجاز متطلبات البورد (جراح رئيسي P)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyDark)),
+              Text('مؤشر إنجاز متطلبات البورد (جراح رئيسي P)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('المنجز: $pCount عملية من أصل $_boardTargetP',
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: textColor)),
                   Text('${(progress * 100).toStringAsFixed(0)}%',
                       style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.statBlueBorder)),
                 ],
@@ -1966,40 +3207,40 @@ class _MainShellScreenState extends State<MainShellScreen> {
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(18)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('توزيع العمليات حسب دورك الجراحي (Surgeon Role)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyDark)),
+              Text('توزيع العمليات حسب دورك الجراحي (Surgeon Role)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
               const Divider(),
-              _buildStatRowItem('P - جراح رئيسي (Performed)', pCount, total, AppColors.statBlueBorder),
-              _buildStatRowItem('S - بإشراف الاستشاري (Supervised)', sCount, total, AppColors.statMintBorder),
-              _buildStatRowItem('A - مساعد جراح (Assisted)', aCount, total, AppColors.statAmberBorder),
+              _buildStatRowItem('P - جراح رئيسي (Performed)', pCount, total, AppColors.statBlueBorder, textColor),
+              _buildStatRowItem('S - بإشراف الاستشاري (Supervised)', sCount, total, AppColors.statMintBorder, textColor),
+              _buildStatRowItem('A - مساعد جراح (Assisted)', aCount, total, AppColors.statAmberBorder, textColor),
             ],
           ),
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(18)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('توزيع العمليات حسب الحجم (Magnitude)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyDark)),
+              Text('توزيع العمليات حسب الحجم (Magnitude)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
               const Divider(),
-              _buildStatRowItem('Complex Major (كبرى معقدة)', complexMajor, total, AppColors.statPurpleBorder),
-              _buildStatRowItem('Major (كبرى)', major, total, AppColors.navyPrimary),
-              _buildStatRowItem('Intermediate (متوسطة)', intermediate, total, AppColors.statMintBorder),
-              _buildStatRowItem('Minor (صغرى)', minor, total, Colors.blueGrey),
+              _buildStatRowItem('Complex Major (كبرى معقدة)', complexMajor, total, AppColors.statPurpleBorder, textColor),
+              _buildStatRowItem('Major (كبرى)', major, total, AppColors.navyPrimary, textColor),
+              _buildStatRowItem('Intermediate (متوسطة)', intermediate, total, AppColors.statMintBorder, textColor),
+              _buildStatRowItem('Minor (صغرى)', minor, total, Colors.blueGrey, textColor),
             ],
           ),
         ),
         const SizedBox(height: 14),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.navyPrimary,
+            backgroundColor: AppColors.getPrimaryColor(_themePalette),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -2013,14 +3254,14 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
-  Widget _buildStatRowItem(String label, int count, int total, Color color) {
+  Widget _buildStatRowItem(String label, int count, int total, Color color, Color textColor) {
     final pct = total > 0 ? ((count / total) * 100).toStringAsFixed(0) : '0';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: textColor)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
@@ -2031,6 +3272,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
     );
   }
 
+  // ==========================================
+  // التبويب الخامس: الإعدادات، الألوان، الإضاءة، واللغات
+  // ==========================================
   Widget _buildSettingsProfileTab() {
     final nameCtrl = TextEditingController(text: _residentName);
     final levelCtrl = TextEditingController(text: _residentLevel);
@@ -2038,29 +3282,120 @@ class _MainShellScreenState extends State<MainShellScreen> {
     final targetCtrl = TextEditingController(text: _boardTargetP.toString());
     final fbUrlCtrl = TextEditingController(text: _firebaseDbUrl);
     final fbCodeCtrl = TextEditingController(text: _firebaseSecretCode);
+    final cardColor = AppColors.getCardColor(_lightingMode);
+    final textColor = AppColors.getTextColor(_lightingMode);
 
     return ListView(
       padding: const EdgeInsets.all(14),
       children: [
+        // بطاقة الألوان والإضاءة الخلفية واللغات
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
+            borderRadius: BorderRadius.circular(18),
+            border: const Border(right: BorderSide(color: AppColors.statAmberBorder, width: 5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('🎨 الألوان، الإضاءة الخلفية، واللغات',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
+                  TextButton.icon(
+                    onPressed: _showAppearanceAndLanguageSheet,
+                    icon: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text('فتح لوحة التحكم'),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Row(
+                children: [
+                  _choiceBtn('العربية 🇮🇶', _appLanguage == 'ar', () async {
+                    await DatabaseHelper.instance.saveSetting('appLanguage', 'ar');
+                    setState(() => _appLanguage = 'ar');
+                  }),
+                  const SizedBox(width: 8),
+                  _choiceBtn('English 🇬🇧', _appLanguage == 'en', () async {
+                    await DatabaseHelper.instance.saveSetting('appLanguage', 'en');
+                    setState(() => _appLanguage = 'en');
+                  }),
+                  const SizedBox(width: 8),
+                  _choiceBtn('کوردی ☀️', _appLanguage == 'ku', () async {
+                    await DatabaseHelper.instance.saveSetting('appLanguage', 'ku');
+                    setState(() => _appLanguage = 'ku');
+                  }),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _choiceBtn('☀️ نهاري', _lightingMode == 'light', () async {
+                    await DatabaseHelper.instance.saveSetting('lightingMode', 'light');
+                    setState(() => _lightingMode = 'light');
+                  }),
+                  const SizedBox(width: 8),
+                  _choiceBtn('📖 دافئ للقراءة', _lightingMode == 'warm', () async {
+                    await DatabaseHelper.instance.saveSetting('lightingMode', 'warm');
+                    setState(() => _lightingMode = 'warm');
+                  }),
+                  const SizedBox(width: 8),
+                  _choiceBtn('🌙 ليلي داكن', _lightingMode == 'dark', () async {
+                    await DatabaseHelper.instance.saveSetting('lightingMode', 'dark');
+                    setState(() => _lightingMode = 'dark');
+                  }),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.brightness_6_rounded, color: textColor, size: 19),
+                  const SizedBox(width: 6),
+                  Text('شدة الإضاءة:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: textColor)),
+                  Expanded(
+                    child: Slider(
+                      value: _bgBrightness,
+                      min: 0.45,
+                      max: 1.0,
+                      divisions: 11,
+                      onChanged: (val) async {
+                        setState(() => _bgBrightness = val);
+                        await DatabaseHelper.instance.saveSetting('bgBrightness', val.toString());
+                      },
+                    ),
+                  ),
+                  Text('${(_bgBrightness * 100).round()}%',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: textColor)),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // بطاقة الخزن السحابي Firebase
+        Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: cardColor,
             borderRadius: BorderRadius.circular(18),
             border: const Border(right: BorderSide(color: AppColors.statMintBorder, width: 5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.cloud_done, color: AppColors.statMintBorder),
-                  SizedBox(width: 8),
+                  const Icon(Icons.cloud_done, color: AppColors.statMintBorder),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'إعدادات الخزن السحابي (Firebase Realtime DB)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyDark),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor),
                     ),
                   ),
                 ],
@@ -2074,9 +3409,9 @@ class _MainShellScreenState extends State<MainShellScreen> {
               TextField(
                 controller: fbUrlCtrl,
                 textDirection: TextDirection.ltr,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(
                   labelText: 'رابط قاعدة بيانات Firebase (Realtime Database URL)',
-                  hintText: 'https://your-project-default-rtdb.firebaseio.com',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -2084,6 +3419,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               TextField(
                 controller: fbCodeCtrl,
                 textDirection: TextDirection.ltr,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(
                   labelText: 'الرمز السري لحسابك (لمزامنة بياناتك بين أجهزتك)',
                   border: OutlineInputBorder(),
@@ -2132,33 +3468,39 @@ class _MainShellScreenState extends State<MainShellScreen> {
             ],
           ),
         ),
+
+        // بطاقة بيانات الطبيب المقيم
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(18)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('بيانات الطبيب المقيم (تظهر في تقارير الـ PDF وشهادة الخروج)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyDark)),
+              Text('بيانات الطبيب المقيم (تظهر في تقارير الـ PDF وشهادة الخروج)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
               const Divider(height: 20),
               TextField(
                 controller: nameCtrl,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(labelText: 'اسم الطبيب المقيم', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: levelCtrl,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(labelText: 'المرحلة / الاختصاص (مثال: بورد جراحة عامة - R3)', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: hospCtrl,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(labelText: 'المستشفى / المركز التدريبي', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: targetCtrl,
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(labelText: 'العدد المستهدف لعمليات الجراح الرئيسي (P)', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 14),
@@ -2166,7 +3508,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.navyPrimary,
+                    backgroundColor: AppColors.getPrimaryColor(_themePalette),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -2197,16 +3539,19 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   Widget _buildCustomBottomNavBar() {
     final items = [
-      {'label': 'الرئيسية', 'icon': Icons.home_rounded},
-      {'label': 'الحالات', 'icon': Icons.folder_rounded},
-      {'label': 'الإحصائيات', 'icon': Icons.bar_chart_rounded},
-      {'label': 'الإعدادات', 'icon': Icons.settings_rounded},
+      {'label': AppTranslator.tr('navHome', _appLanguage), 'icon': Icons.home_rounded},
+      {'label': AppTranslator.tr('navStudy', _appLanguage), 'icon': Icons.school_rounded},
+      {'label': AppTranslator.tr('navCases', _appLanguage), 'icon': Icons.folder_rounded},
+      {'label': AppTranslator.tr('navStats', _appLanguage), 'icon': Icons.bar_chart_rounded},
+      {'label': AppTranslator.tr('navSettings', _appLanguage), 'icon': Icons.settings_rounded},
     ];
+
+    final cardColor = AppColors.getCardColor(_lightingMode);
 
     return Container(
       height: 70,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -2219,33 +3564,37 @@ class _MainShellScreenState extends State<MainShellScreen> {
       child: Row(
         children: List.generate(items.length, (i) {
           final isSelected = _currentTabIndex == i;
-          final color = isSelected ? const Color(0xFF0066CC) : const Color(0xFF475569);
+          final color = isSelected
+              ? const Color(0xFF0066CC)
+              : (_lightingMode == 'dark' ? Colors.white70 : const Color(0xFF475569));
 
           return Expanded(
             child: InkWell(
               onTap: () => setState(() => _currentTabIndex = i),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFF0F7FF) : Colors.transparent,
+                  color: isSelected ? const Color(0xFF0066CC).withOpacity(0.10) : Colors.transparent,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(items[i]['icon'] as IconData, color: color, size: 26),
+                    Icon(items[i]['icon'] as IconData, color: color, size: 24),
                     const SizedBox(height: 3),
                     Text(
                       items[i]['label'] as String,
                       style: TextStyle(
                         color: color,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Container(
                       height: 3,
-                      width: isSelected ? 48 : 0,
+                      width: isSelected ? 38 : 0,
                       decoration: BoxDecoration(
                         color: const Color(0xFF0066CC),
                         borderRadius: BorderRadius.circular(4),
@@ -2263,7 +3612,133 @@ class _MainShellScreenState extends State<MainShellScreen> {
 }
 
 // ==========================================
-// 4. شاشة إضافة وتعديل ملف المريض (مع القوالب الجراحية السريعة)
+// ودجت البطاقة الدراسية التفاعلية (Tap to Flip Flashcard)
+// ==========================================
+class _FlashcardInteractiveWidget extends StatefulWidget {
+  final StudyItem item;
+  final Color cardBgColor;
+  final Color textColor;
+  final ValueChanged<String> onStatusToggle;
+  final VoidCallback onDelete;
+
+  const _FlashcardInteractiveWidget({
+    required this.item,
+    required this.cardBgColor,
+    required this.textColor,
+    required this.onStatusToggle,
+    required this.onDelete,
+  });
+
+  @override
+  State<_FlashcardInteractiveWidget> createState() => _FlashcardInteractiveWidgetState();
+}
+
+class _FlashcardInteractiveWidgetState extends State<_FlashcardInteractiveWidget> {
+  bool _isAnswerVisible = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMastered = widget.item.status == 'mastered';
+    return Card(
+      color: widget.cardBgColor,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isMastered ? AppColors.statMintBorder : AppColors.statPurpleBorder.withOpacity(0.35),
+          width: 1.5,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => setState(() => _isAnswerVisible = !_isAnswerVisible),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.statPurpleBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      widget.item.category,
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.statPurpleBorder),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        _isAnswerVisible ? 'اضغط لإخفاء الجواب' : 'اضغط لكشف الجواب 💡',
+                        style: const TextStyle(fontSize: 11, color: Colors.blueGrey),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                        onPressed: widget.onDelete,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '❓ ${widget.item.questionOrTitle}',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: widget.textColor),
+              ),
+              if (_isAnswerVisible) ...[
+                const Divider(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.pillGreenBg.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    widget.item.answerOrBody,
+                    style: const TextStyle(fontSize: 13.5, color: AppColors.navyDark, height: 1.45),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => widget.onStatusToggle('review'),
+                        icon: const Icon(Icons.refresh_rounded, size: 17),
+                        label: const Text('أراجعه لاحقاً 🔄', style: TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isMastered ? AppColors.statMintBorder : Colors.blueGrey,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => widget.onStatusToggle('mastered'),
+                        icon: const Icon(Icons.check_circle_outline, size: 17),
+                        label: const Text('متقن ✅', style: TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 4. شاشة إضافة وتعديل ملف المريض (مع HPI وسؤال الـ Viva)
 // ==========================================
 class PatientFormScreen extends StatefulWidget {
   final PatientRecord? existingPatient;
@@ -2289,6 +3764,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
   late TextEditingController _pastSurgeriesCtrl;
   late TextEditingController _pastCompCtrl;
   late TextEditingController _complaintCtrl;
+  late TextEditingController _hpiCtrl; // History of Present Illness
   late TextEditingController _examCtrl;
   late TextEditingController _labNotesCtrl;
   late TextEditingController _diagnosisCtrl;
@@ -2300,6 +3776,8 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
   late TextEditingController _histoResultCtrl;
   late TextEditingController _tnmCtrl;
   late TextEditingController _pearlsCtrl;
+  late TextEditingController _vivaQCtrl;
+  late TextEditingController _vivaACtrl;
   late TextEditingController _dischargeCtrl;
   late TextEditingController _followUpCtrl;
 
@@ -2342,6 +3820,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
     _pastSurgeriesCtrl = TextEditingController(text: p?.pastSurgeries ?? '');
     _pastCompCtrl = TextEditingController(text: p?.pastComplications ?? '');
     _complaintCtrl = TextEditingController(text: p?.chiefComplaint ?? '');
+    _hpiCtrl = TextEditingController(text: p?.hpi ?? '');
     _examCtrl = TextEditingController(text: p?.clinicalExam ?? '');
     _labNotesCtrl = TextEditingController(text: p?.labRadiologyNotes ?? '');
     _diagnosisCtrl = TextEditingController(text: p?.diagnosis ?? '');
@@ -2353,6 +3832,8 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
     _histoResultCtrl = TextEditingController(text: p?.histopathologyResult ?? '');
     _tnmCtrl = TextEditingController(text: p?.tnmStaging ?? '');
     _pearlsCtrl = TextEditingController(text: p?.surgicalPearls ?? '');
+    _vivaQCtrl = TextEditingController(text: p?.vivaQuestion ?? '');
+    _vivaACtrl = TextEditingController(text: p?.vivaAnswer ?? '');
     _dischargeCtrl = TextEditingController(text: p?.dischargeTreatment ?? '');
     _followUpCtrl = TextEditingController(text: p?.followUpDate ?? '');
 
@@ -2388,6 +3869,21 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('تم إدراج قالب "$title" بنجاح')),
     );
+  }
+
+  void _insertSocratesTemplate() {
+    const socrates = '• الموضع (Site): \n'
+        '• البداية والمدة (Onset & Duration): \n'
+        '• طبيعة الألم والانتشار (Character & Radiation): \n'
+        '• الأعراض المرافقة (Associated symptoms): \n'
+        '• العوامل المفاقمة والمخففة (Exacerbating/Relieving): ';
+    setState(() {
+      if (_hpiCtrl.text.trim().isEmpty) {
+        _hpiCtrl.text = socrates;
+      } else {
+        _hpiCtrl.text = '${_hpiCtrl.text}\n$socrates';
+      }
+    });
   }
 
   Future<void> _addPhoto(List<String> targetList, String prefix) async {
@@ -2443,6 +3939,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
       pastSurgeries: _pastSurgeriesCtrl.text.trim(),
       pastComplications: _pastCompCtrl.text.trim(),
       chiefComplaint: _complaintCtrl.text.trim(),
+      hpi: _hpiCtrl.text.trim(),
       clinicalExam: _examCtrl.text.trim(),
       labRadiologyNotes: _labNotesCtrl.text.trim(),
       diagnosis: _diagnosisCtrl.text.trim(),
@@ -2461,6 +3958,8 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
       tnmStaging: _tnmCtrl.text.trim(),
       isStarred: _isStarred,
       surgicalPearls: _pearlsCtrl.text.trim(),
+      vivaQuestion: _vivaQCtrl.text.trim(),
+      vivaAnswer: _vivaACtrl.text.trim(),
       finalOutcome: _finalOutcome,
       clavienDindoGrade: _clavienGrade,
       dischargeTreatment: _dischargeCtrl.text.trim(),
@@ -2482,307 +3981,329 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.existingPatient == null ? 'إضافة حالة جديدة' : 'تعديل ملف المريض'),
-        actions: [
-          IconButton(
-            icon: Icon(_isStarred ? Icons.star_rounded : Icons.star_border_rounded, color: Colors.amber),
-            onPressed: () => setState(() => _isStarred = !_isStarred),
-          ),
-          IconButton(icon: const Icon(Icons.save), onPressed: _savePatient),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(14),
-          children: [
-            Card(
-              color: AppColors.statBlueBg,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('⚡ قوالب العمليات الجاهزة (تعبئة سريعة):',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.navyDark)),
-                    const SizedBox(height: 6),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _templateChip(
-                            'Lap. Cholecystectomy',
-                            'التهاب المرارة الحصوي',
-                            'Lap. Cholecystectomy',
-                            'Major',
-                            '4-port laparoscopy, Calot triangle dissected, Critical View of Safety achieved, cystic duct & artery clipped and divided.',
-                          ),
-                          _templateChip(
-                            'Lap. Appendectomy',
-                            'التهاب الزائدة الدودية الحاد',
-                            'Lap. Appendectomy',
-                            'Intermediate',
-                            '3-port laparoscopy, inflamed appendix identified, mesoappendix controlled, base ligated with endoloop.',
-                          ),
-                          _templateChip(
-                            'Inguinal Hernia (Mesh)',
-                            'فتق مغبني',
-                            'Lichtenstein Mesh Hernioplasty',
-                            'Intermediate',
-                            'Inguinal canal opened, sac identified and reduced, polypropylene mesh fixed to inguinal ligament and conjoint tendon.',
-                          ),
-                          _templateChip(
-                            'Total Thyroidectomy',
-                            'تضخم الغدة الدرقية متعدد العقد',
-                            'Total Thyroidectomy',
-                            'Complex Major',
-                            'Collar incision, superior & inferior thyroid vessels ligated, bilateral RLN and parathyroids identified and preserved.',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.existingPatient == null ? 'إضافة حالة جديدة' : 'تعديل ملف المريض'),
+          actions: [
+            IconButton(
+              icon: Icon(_isStarred ? Icons.star_rounded : Icons.star_border_rounded, color: Colors.amber),
+              onPressed: () => setState(() => _isStarred = !_isStarred),
             ),
-            const SizedBox(height: 10),
-            _buildSectionCard(
-              title: '1. البيانات الشخصية للمريض',
-              icon: Icons.person,
-              children: [
-                _buildTextField(_nameCtrl, 'اسم المريض الرباعي *', required: true),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_ageCtrl, 'العمر *', required: true, isNumber: true)),
-                    const SizedBox(width: 10),
-                    Expanded(child: _buildTextField(_mrnCtrl, 'رقم الملف (MRN)')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildDropdown('الجنس', _gender, ['ذكر', 'أنثى'], (v) => setState(() => _gender = v!))),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildDropdown(
-                        'فصيلة الدم',
-                        _bloodGroup,
-                        ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'],
-                        (v) => setState(() => _bloodGroup = v!),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_phoneCtrl, 'رقم الهاتف')),
-                    const SizedBox(width: 10),
-                    Expanded(child: _buildTextField(_admissionDateCtrl, 'تاريخ الدخول')),
-                  ],
-                ),
-              ],
-            ),
-            _buildSectionCard(
-              title: '2. بيانات اللوكبوك الجراحي (Board Logbook)',
-              icon: Icons.badge,
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_rotationCtrl, 'الروتيشن (الجراحة العامة، أطفال...)')),
-                    const SizedBox(width: 10),
-                    Expanded(child: _buildTextField(_consultantCtrl, 'الاختصاصي المشرف (مثال: سامر)')),
-                  ],
-                ),
-                _buildDropdown(
-                  'دورك في العملية (Surgeon Role)',
-                  _surgeonRole,
-                  [
-                    'P - جراح رئيسي (Performed)',
-                    'S-TS - بإشراف مباشر (المشرف معقم)',
-                    'S-TU - بإشراف غير مباشر (المشرف بالصالة)',
-                    'A - مساعد جراح (Assisted)',
-                  ],
-                  (v) => setState(() => _surgeonRole = v!),
-                ),
-                _buildDropdown(
-                  'حجم وتصنيف العملية (Magnitude)',
-                  _opMagnitude,
-                  ['Complex Major', 'Major', 'Intermediate', 'Minor'],
-                  (v) => setState(() => _opMagnitude = v!),
-                ),
-              ],
-            ),
-            _buildSectionCard(
-              title: '3. التاريخ المرضي والجراحات السابقة',
-              icon: Icons.history_edu,
-              children: [
-                _buildTextField(_chronicCtrl, 'الأمراض المزمنة (سكري، ضغط، قلب، ربو...)', maxLines: 2),
-                _buildTextField(_allergiesCtrl, 'الحساسية الدوائية'),
-                _buildTextField(_medsCtrl, 'الأدوية المستمرة ومميعات الدم', maxLines: 2),
-                _buildDropdown('التدخين', _smokingStatus, ['غير مدخن', 'مدخن حالي', 'مدخن سابق'], (v) => setState(() => _smokingStatus = v!)),
-                _buildTextField(_pastSurgeriesCtrl, 'العمليات الجراحية السابقة', maxLines: 2),
-                _buildTextField(_pastCompCtrl, 'مضاعفات جراحية أو تخديرية سابقة'),
-              ],
-            ),
-            _buildSectionCard(
-              title: '4. مما يعاني حالياً والتشخيص السريري',
-              icon: Icons.medical_information,
-              children: [
-                _buildTextField(_complaintCtrl, 'الشكوى الرئيسية (مما يعاني حالياً) *', required: true, maxLines: 2),
-                _buildTextField(_examCtrl, 'الفحص السريري والعلامات الحيوية', maxLines: 2),
-                _buildTextField(_labNotesCtrl, 'نتائج التحاليل والأشعة والسونار/المفراس', maxLines: 2),
-                _buildTextField(_diagnosisCtrl, 'التشخيص النهائي (Diagnosis) *', required: true),
-              ],
-            ),
-            _buildSectionCard(
-              title: '5. تفاصيل العملية الجراحية المقررة',
-              icon: Icons.local_hospital,
-              children: [
-                _buildTextField(_operationCtrl, 'اسم ونوع العملية المقررة *', required: true),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDropdown(
-                        'تصنيف العملية',
-                        _urgency,
-                        ['مجدولة (باردة)', 'طارئة (Emergency)', 'مستعجلة (Urgent)'],
-                        (v) => setState(() => _urgency = v!),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildDropdown(
-                        'حالة العملية',
-                        _opStatus,
-                        ['تمت العملية', 'مقررة', 'مؤجلة'],
-                        (v) => setState(() => _opStatus = v!),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDropdown(
-                        'تصنيف ASA',
-                        _asaScore,
-                        ['ASA I', 'ASA II', 'ASA III', 'ASA IV', 'ASA V'],
-                        (v) => setState(() => _asaScore = v!),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildDropdown(
-                        'نوع التخدير',
-                        _anesthesia,
-                        ['تخدير عام (GA)', 'تخدير نصفي (Spinal)', 'تخدير موضعي (Local)'],
-                        (v) => setState(() => _anesthesia = v!),
-                      ),
-                    ),
-                  ],
-                ),
-                _buildTextField(_opDateCtrl, 'تاريخ العملية'),
-                _buildTextField(_opNotesCtrl, 'تفاصيل وخطوات العملية (Operative Notes)', maxLines: 3),
-              ],
-            ),
-            _buildSectionCard(
-              title: '6. متابعة الردهة، الدرينات، والوقاية',
-              icon: Icons.vaccines,
-              children: [
-                _buildTextField(_drainsCtrl, 'الدرينات والصوندات (النوع، العدد، المخرجات اليومية)', maxLines: 2),
-                _buildDropdown(
-                  'الوقاية الخثرية (DVT Prophylaxis)',
-                  _dvtProphylaxis,
-                  [
-                    'ميكانيكي + دوائي (LMWH/Heparin)',
-                    'دوائي فقط (Clexane / Heparin)',
-                    'ميكانيكي فقط',
-                    'لا يحتاج (خطورة منخفضة)',
-                  ],
-                  (v) => setState(() => _dvtProphylaxis = v!),
-                ),
-                _buildTextField(_antibioticCtrl, 'خطة الصادات الحيوية (Antibiotic Prophylaxis)'),
-              ],
-            ),
-            _buildSectionCard(
-              title: '7. متابعة الزرع النسيجي والأورام (Histopathology)',
-              icon: Icons.biotech,
-              children: [
-                _buildDropdown(
-                  'حالة الزرع النسيجي',
-                  _biopsyStatus,
-                  ['بانتظار الزرع (Pending)', 'ظهرت النتيجة (Completed)', 'لا يحتاج زرع'],
-                  (v) => setState(() => _biopsyStatus = v!),
-                ),
-                _buildTextField(_histoResultCtrl, 'نتيجة الزرع النسيجي وحالة الحواف (Margins)', maxLines: 2),
-                _buildTextField(_tnmCtrl, 'تصنيف الأورام (TNM Staging) وقرار الـ MDT'),
-              ],
-            ),
-            _buildSectionCard(
-              title: '8. ملاحظات البورد والامتحان (Surgical Pearls)',
-              icon: Icons.school,
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('تمييز كحالة مهمة للامتحان (⭐ Starred Case)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  value: _isStarred,
-                  onChanged: (v) => setState(() => _isStarred = v),
-                ),
-                _buildTextField(_pearlsCtrl, 'الملاحظات التشريحية والدروس الجراحية المستفادة', maxLines: 3),
-              ],
-            ),
-            _buildSectionCard(
-              title: '9. الأرشيف الصوري الطبي (4 أقسام)',
-              icon: Icons.camera_enhance,
-              children: [
-                _buildMediaPickerSection('صور الأشعة والمفراس والرنين', _radiologyImages, 'xray'),
-                const Divider(),
-                _buildMediaPickerSection('صور التحاليل المختبرية والتقارير', _labImages, 'lab'),
-                const Divider(),
-                _buildMediaPickerSection('صور الجرح والعملية (قبل/أثناء/بعد)', _woundImages, 'wound'),
-                const Divider(),
-                _buildMediaPickerSection('صور تقرير الزرع النسيجي (Biopsy)', _biopsyImages, 'biopsy'),
-              ],
-            ),
-            _buildSectionCard(
-              title: '10. النتيجة النهائية وخطة الخروج',
-              icon: Icons.fact_check,
-              children: [
-                _buildDropdown(
-                  'النتيجة النهائية للمريض',
-                  _finalOutcome,
-                  ['شفاء تام', 'تحسن مستمر', 'قيد المتابعة', 'حدوث مضاعفات', 'تحويل لمركز تخصصي', 'وفاة'],
-                  (v) => setState(() => _finalOutcome = v!),
-                ),
-                _buildDropdown(
-                  'تصنيف المضاعفات (Clavien-Dindo)',
-                  _clavienGrade,
-                  ['لا يوجد (None)', 'Grade I', 'Grade II', 'Grade IIIa', 'Grade IIIb', 'Grade IVa', 'Grade IVb', 'Grade V'],
-                  (v) => setState(() => _clavienGrade = v!),
-                ),
-                _buildTextField(_dischargeCtrl, 'علاج الخروج وتوصيات العناية بالجرح', maxLines: 2),
-                _buildTextField(_followUpCtrl, 'موعد المراجعة القادم ورفع الخيوط'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 52,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.navyPrimary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                onPressed: _savePatient,
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('حفظ الحالة في سجل البورد', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(height: 30),
+            IconButton(icon: const Icon(Icons.save), onPressed: _savePatient),
           ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(14),
+            children: [
+              Card(
+                color: AppColors.statBlueBg,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('⚡ قوالب العمليات الجاهزة (تعبئة سريعة):',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.navyDark)),
+                      const SizedBox(height: 6),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _templateChip(
+                              'Lap. Cholecystectomy',
+                              'التهاب المرارة الحصوي',
+                              'Lap. Cholecystectomy',
+                              'Major',
+                              '4-port laparoscopy, Calot triangle dissected, Critical View of Safety achieved, cystic duct & artery clipped and divided.',
+                            ),
+                            _templateChip(
+                              'Lap. Appendectomy',
+                              'التهاب الزائدة الدودية الحاد',
+                              'Lap. Appendectomy',
+                              'Intermediate',
+                              '3-port laparoscopy, inflamed appendix identified, mesoappendix controlled, base ligated with endoloop.',
+                            ),
+                            _templateChip(
+                              'Inguinal Hernia (Mesh)',
+                              'فتق مغبني',
+                              'Lichtenstein Mesh Hernioplasty',
+                              'Intermediate',
+                              'Inguinal canal opened, sac identified and reduced, polypropylene mesh fixed to inguinal ligament and conjoint tendon.',
+                            ),
+                            _templateChip(
+                              'Total Thyroidectomy',
+                              'تضخم الغدة الدرقية متعدد العقد',
+                              'Total Thyroidectomy',
+                              'Complex Major',
+                              'Collar incision, superior & inferior thyroid vessels ligated, bilateral RLN and parathyroids identified and preserved.',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildSectionCard(
+                title: '1. البيانات الشخصية للمريض',
+                icon: Icons.person,
+                children: [
+                  _buildTextField(_nameCtrl, 'اسم المريض الرباعي *', required: true),
+                  Row(
+                    children: [
+                      Expanded(child: _buildTextField(_ageCtrl, 'العمر *', required: true, isNumber: true)),
+                      const SizedBox(width: 10),
+                      Expanded(child: _buildTextField(_mrnCtrl, 'رقم الملف (MRN)')),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDropdown('الجنس', _gender, ['ذكر', 'أنثى'], (v) => setState(() => _gender = v!))),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildDropdown(
+                          'فصيلة الدم',
+                          _bloodGroup,
+                          ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'],
+                          (v) => setState(() => _bloodGroup = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(child: _buildTextField(_phoneCtrl, 'رقم الهاتف')),
+                      const SizedBox(width: 10),
+                      Expanded(child: _buildTextField(_admissionDateCtrl, 'تاريخ الدخول')),
+                    ],
+                  ),
+                ],
+              ),
+              _buildSectionCard(
+                title: '2. بيانات اللوكبوك الجراحي (Board Logbook)',
+                icon: Icons.badge,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildTextField(_rotationCtrl, 'الروتيشن (الجراحة العامة، أطفال...)')),
+                      const SizedBox(width: 10),
+                      Expanded(child: _buildTextField(_consultantCtrl, 'الاختصاصي المشرف (مثال: سامر)')),
+                    ],
+                  ),
+                  _buildDropdown(
+                    'دورك في العملية (Surgeon Role)',
+                    _surgeonRole,
+                    [
+                      'P - جراح رئيسي (Performed)',
+                      'S-TS - بإشراف مباشر (المشرف معقم)',
+                      'S-TU - بإشراف غير مباشر (المشرف بالصالة)',
+                      'A - مساعد جراح (Assisted)',
+                    ],
+                    (v) => setState(() => _surgeonRole = v!),
+                  ),
+                  _buildDropdown(
+                    'حجم وتصنيف العملية (Magnitude)',
+                    _opMagnitude,
+                    ['Complex Major', 'Major', 'Intermediate', 'Minor'],
+                    (v) => setState(() => _opMagnitude = v!),
+                  ),
+                ],
+              ),
+              _buildSectionCard(
+                title: '3. التاريخ المرضي والجراحات السابقة',
+                icon: Icons.history_edu,
+                children: [
+                  _buildTextField(_chronicCtrl, 'الأمراض المزمنة (سكري، ضغط، قلب، ربو...)', maxLines: 2),
+                  _buildTextField(_allergiesCtrl, 'الحساسية الدوائية'),
+                  _buildTextField(_medsCtrl, 'الأدوية المستمرة ومميعات الدم', maxLines: 2),
+                  _buildDropdown('التدخين', _smokingStatus, ['غير مدخن', 'مدخن حالي', 'مدخن سابق'], (v) => setState(() => _smokingStatus = v!)),
+                  _buildTextField(_pastSurgeriesCtrl, 'العمليات الجراحية السابقة', maxLines: 2),
+                  _buildTextField(_pastCompCtrl, 'مضاعفات جراحية أو تخديرية سابقة'),
+                ],
+              ),
+              _buildSectionCard(
+                title: '4. الشكوى، القصة المرضية (HPI)، والتشخيص السريري',
+                icon: Icons.medical_information,
+                children: [
+                  _buildTextField(_complaintCtrl, 'الشكوى الرئيسية (Chief Complaint) *', required: true, maxLines: 2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('القصة المرضية التفصيلية (History of Present Illness):',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: AppColors.navyPrimary)),
+                      TextButton.icon(
+                        onPressed: _insertSocratesTemplate,
+                        icon: const Icon(Icons.bolt, size: 16),
+                        label: const Text('قالب SOCRATES', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                  _buildTextField(
+                    _hpiCtrl,
+                    'تفاصيل الـ HPI (بداية الأعراض، تطورها، طبيعة الألم، الأعراض المرافقة...)',
+                    maxLines: 4,
+                  ),
+                  _buildTextField(_examCtrl, 'الفحص السريري والعلامات الحيوية', maxLines: 2),
+                  _buildTextField(_labNotesCtrl, 'نتائج التحاليل والأشعة والسونار/المفراس', maxLines: 2),
+                  _buildTextField(_diagnosisCtrl, 'التشخيص النهائي (Diagnosis) *', required: true),
+                ],
+              ),
+              _buildSectionCard(
+                title: '5. تفاصيل العملية الجراحية المقررة',
+                icon: Icons.local_hospital,
+                children: [
+                  _buildTextField(_operationCtrl, 'اسم ونوع العملية المقررة *', required: true),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDropdown(
+                          'تصنيف العملية',
+                          _urgency,
+                          ['مجدولة (باردة)', 'طارئة (Emergency)', 'مستعجلة (Urgent)'],
+                          (v) => setState(() => _urgency = v!),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildDropdown(
+                          'حالة العملية',
+                          _opStatus,
+                          ['تمت العملية', 'مقررة', 'مؤجلة'],
+                          (v) => setState(() => _opStatus = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDropdown(
+                          'تصنيف ASA',
+                          _asaScore,
+                          ['ASA I', 'ASA II', 'ASA III', 'ASA IV', 'ASA V'],
+                          (v) => setState(() => _asaScore = v!),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildDropdown(
+                          'نوع التخدير',
+                          _anesthesia,
+                          ['تخدير عام (GA)', 'تخدير نصفي (Spinal)', 'تخدير موضعي (Local)'],
+                          (v) => setState(() => _anesthesia = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildTextField(_opDateCtrl, 'تاريخ العملية'),
+                  _buildTextField(_opNotesCtrl, 'تفاصيل وخطوات العملية (Operative Notes)', maxLines: 3),
+                ],
+              ),
+              _buildSectionCard(
+                title: '6. متابعة الردهة، الدرينات، والوقاية',
+                icon: Icons.vaccines,
+                children: [
+                  _buildTextField(_drainsCtrl, 'الدرينات والصوندات (النوع، العدد، المخرجات اليومية)', maxLines: 2),
+                  _buildDropdown(
+                    'الوقاية الخثرية (DVT Prophylaxis)',
+                    _dvtProphylaxis,
+                    [
+                      'ميكانيكي + دوائي (LMWH/Heparin)',
+                      'دوائي فقط (Clexane / Heparin)',
+                      'ميكانيكي فقط',
+                      'لا يحتاج (خطورة منخفضة)',
+                    ],
+                    (v) => setState(() => _dvtProphylaxis = v!),
+                  ),
+                  _buildTextField(_antibioticCtrl, 'خطة الصادات الحيوية (Antibiotic Prophylaxis)'),
+                ],
+              ),
+              _buildSectionCard(
+                title: '7. متابعة الزرع النسيجي والأورام (Histopathology)',
+                icon: Icons.biotech,
+                children: [
+                  _buildDropdown(
+                    'حالة الزرع النسيجي',
+                    _biopsyStatus,
+                    ['بانتظار الزرع (Pending)', 'ظهرت النتيجة (Completed)', 'لا يحتاج زرع'],
+                    (v) => setState(() => _biopsyStatus = v!),
+                  ),
+                  _buildTextField(_histoResultCtrl, 'نتيجة الزرع النسيجي وحالة الحواف (Margins)', maxLines: 2),
+                  _buildTextField(_tnmCtrl, 'تصنيف الأورام (TNM Staging) وقرار الـ MDT'),
+                ],
+              ),
+              _buildSectionCard(
+                title: '8. ملاحظات البورد وسؤال الـ Viva على المريض',
+                icon: Icons.school,
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('تمييز كحالة مهمة للامتحان (⭐ Starred Case)',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    value: _isStarred,
+                    onChanged: (v) => setState(() => _isStarred = v),
+                  ),
+                  _buildTextField(_vivaQCtrl, '❓ سؤال انسألت بيه بالردهة/العمليات على هذه الحالة (Viva Question)', maxLines: 2),
+                  _buildTextField(_vivaACtrl, '💡 الجواب النموذجي للسؤال (يُحفظ تلقائياً في تبويب الدراسة)', maxLines: 3),
+                  _buildTextField(_pearlsCtrl, '📌 الملاحظات التشريحية والدروس الجراحية المستفادة (Surgical Pearls)', maxLines: 3),
+                ],
+              ),
+              _buildSectionCard(
+                title: '9. الأرشيف الصوري الطبي (4 أقسام)',
+                icon: Icons.camera_enhance,
+                children: [
+                  _buildMediaPickerSection('صور الأشعة والمفراس والرنين', _radiologyImages, 'xray'),
+                  const Divider(),
+                  _buildMediaPickerSection('صور التحاليل المختبرية والتقارير', _labImages, 'lab'),
+                  const Divider(),
+                  _buildMediaPickerSection('صور الجرح والعملية (قبل/أثناء/بعد)', _woundImages, 'wound'),
+                  const Divider(),
+                  _buildMediaPickerSection('صور تقرير الزرع النسيجي (Biopsy)', _biopsyImages, 'biopsy'),
+                ],
+              ),
+              _buildSectionCard(
+                title: '10. النتيجة النهائية وخطة الخروج',
+                icon: Icons.fact_check,
+                children: [
+                  _buildDropdown(
+                    'النتيجة النهائية للمريض',
+                    _finalOutcome,
+                    ['شفاء تام', 'تحسن مستمر', 'قيد المتابعة', 'حدوث مضاعفات', 'تحويل لمركز تخصصي', 'وفاة'],
+                    (v) => setState(() => _finalOutcome = v!),
+                  ),
+                  _buildDropdown(
+                    'تصنيف المضاعفات (Clavien-Dindo)',
+                    _clavienGrade,
+                    ['لا يوجد (None)', 'Grade I', 'Grade II', 'Grade IIIa', 'Grade IIIb', 'Grade IVa', 'Grade IVb', 'Grade V'],
+                    (v) => setState(() => _clavienGrade = v!),
+                  ),
+                  _buildTextField(_dischargeCtrl, 'علاج الخروج وتوصيات العناية بالجرح', maxLines: 2),
+                  _buildTextField(_followUpCtrl, 'موعد المراجعة القادم ورفع الخيوط'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navyPrimary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: _savePatient,
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('حفظ الحالة في سجل البورد', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );
@@ -2925,7 +4446,7 @@ class _PatientFormScreenState extends State<PatientFormScreen> {
 }
 
 // ==========================================
-// 5. شاشة عرض ملف المريض التفصيلي + شهادة الخروج + المقارنة البصرية
+// 5. شاشة عرض ملف المريض التفصيلي + HPI + شهادة الخروج + المقارنة البصرية
 // ==========================================
 class PatientDetailsScreen extends StatefulWidget {
   final int patientId;
@@ -3119,7 +4640,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           buildPdfRow('الأمراض المزمنة والأدوية:', '${p.chronicDiseases} | الأدوية: ${p.currentMedications}'),
           buildPdfRow('العمليات الجراحية السابقة:', p.pastSurgeries),
           pw.Divider(),
-          buildPdfRow('الشكوى الرئيسية:', p.chiefComplaint),
+          buildPdfRow('الشكوى الرئيسية (Chief Complaint):', p.chiefComplaint),
+          buildPdfRow('القصة المرضية التفصيلية (HPI):', p.hpi),
           buildPdfRow('الفحص السريري والتحاليل:', '${p.clinicalExam} | ${p.labRadiologyNotes}'),
           buildPdfRow('التشخيص النهائي:', p.diagnosis),
           pw.Divider(),
@@ -3129,7 +4651,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           buildPdfRow('الدرينات والوقاية:', 'الدرينات: ${p.drainsInfo} | الوقاية: ${p.dvtProphylaxis}'),
           pw.Divider(),
           buildPdfRow('الزرع النسيجي و TNM:', '${p.biopsyStatus} - ${p.histopathologyResult} (${p.tnmStaging})'),
-          buildPdfRow('ملاحظات البورد (Surgical Pearls):', p.surgicalPearls),
+          buildPdfRow('ملاحظات البورد والـ Viva:', '${p.surgicalPearls} | ${p.vivaQuestion}'),
           buildPdfRow('النتيجة النهائية:', '${p.finalOutcome} (المضاعفات: ${p.clavienDindoGrade})'),
           buildPdfRow('خطة الخروج والمراجعة:', '${p.dischargeTreatment} | المراجعة: ${p.followUpDate}'),
         ],
@@ -3342,217 +4864,228 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         p.woundImages.length +
         p.biopsyImages.length;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(p.displayName(_anonymized)),
-        actions: [
-          IconButton(
-            icon: Icon(p.isStarred ? Icons.star_rounded : Icons.star_border_rounded, color: Colors.amber),
-            tooltip: 'تمييز للامتحان',
-            onPressed: _toggleStar,
-          ),
-          IconButton(
-            icon: const Icon(Icons.compare, color: Colors.cyanAccent),
-            tooltip: 'المقارنة البصرية (قبل / بعد)',
-            onPressed: _openVisualComparisonTool,
-          ),
-          IconButton(
-            icon: const Icon(Icons.fact_check, color: Colors.greenAccent),
-            tooltip: 'شهادة خروج المريض (Discharge PDF)',
-            onPressed: _generateDischargeCertificatePdf,
-          ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'تقرير الحالة الكامل (Case PDF)',
-            onPressed: _generateAndSharePdf,
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'تعديل الملف',
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => PatientFormScreen(existingPatient: p)),
-              );
-              _loadPatient();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('حذف سجل المريض'),
-                  content: const Text('هل أنت متأكد من حذف هذا السجل نهائياً؟'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('حذف'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm == true) {
-                await DatabaseHelper.instance.deletePatient(p.id!);
-                if (mounted) Navigator.pop(context);
-              }
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          Card(
-            color: AppColors.navyPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          p.displayName(_anonymized),
-                          style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Chip(
-                        label: Text(p.operationStatus, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        backgroundColor: AppColors.pillGreenBg,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(p.displayName(_anonymized)),
+          actions: [
+            IconButton(
+              icon: Icon(p.isStarred ? Icons.star_rounded : Icons.star_border_rounded, color: Colors.amber),
+              tooltip: 'تمييز للامتحان',
+              onPressed: _toggleStar,
+            ),
+            IconButton(
+              icon: const Icon(Icons.compare, color: Colors.cyanAccent),
+              tooltip: 'المقارنة البصرية (قبل / بعد)',
+              onPressed: _openVisualComparisonTool,
+            ),
+            IconButton(
+              icon: const Icon(Icons.fact_check, color: Colors.greenAccent),
+              tooltip: 'شهادة خروج المريض (Discharge PDF)',
+              onPressed: _generateDischargeCertificatePdf,
+            ),
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              tooltip: 'تقرير الحالة الكامل (Case PDF)',
+              onPressed: _generateAndSharePdf,
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'تعديل الملف',
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PatientFormScreen(existingPatient: p)),
+                );
+                _loadPatient();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('حذف سجل المريض'),
+                    content: const Text('هل أنت متأكد من حذف هذا السجل نهائياً؟'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('حذف'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'العمر: ${p.age} سنة | ${p.gender} | دم: ${p.bloodGroup} | ملف: ${p.mrn}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  if (!_anonymized)
+                );
+                if (confirm == true) {
+                  await DatabaseHelper.instance.deletePatient(p.id!);
+                  if (mounted) Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            Card(
+              color: AppColors.navyPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            p.displayName(_anonymized),
+                            style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Chip(
+                          label: Text(p.operationStatus, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          backgroundColor: AppColors.pillGreenBg,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
                     Text(
-                      'هاتف: ${p.phone} | تاريخ الدخول: ${p.admissionDate}',
+                      'العمر: ${p.age} سنة | ${p.gender} | دم: ${p.bloodGroup} | ملف: ${p.mrn}',
                       style: const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
-                  const Divider(color: Colors.white24, height: 16),
-                  Text(
-                    'الروتيشن: ${p.rotation} | المشرف: د. ${p.consultantName.isEmpty ? "غير محدد" : p.consultantName}',
-                    style: const TextStyle(color: Colors.amberAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                    if (!_anonymized)
+                      Text(
+                        'هاتف: ${p.phone} | تاريخ الدخول: ${p.admissionDate}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    const Divider(color: Colors.white24, height: 16),
+                    Text(
+                      'الروتيشن: ${p.rotation} | المشرف: د. ${p.consultantName.isEmpty ? "غير محدد" : p.consultantName}',
+                      style: const TextStyle(color: Colors.amberAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'الدور: ${p.surgeonRole} | الحجم: ${p.operationMagnitude}',
+                      style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.statMintBorder,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: _generateDischargeCertificatePdf,
+                      icon: const Icon(Icons.fact_check, size: 19),
+                      label: const Text('شهادة خروج المريض PDF',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                    ),
                   ),
-                  Text(
-                    'الدور: ${p.surgeonRole} | الحجم: ${p.operationMagnitude}',
-                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.statPurpleBorder,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: _openVisualComparisonTool,
+                      icon: const Icon(Icons.compare, size: 19),
+                      label: Text('مقارنة بصرية ($totalImagesCount صور)',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.statMintBorder,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: _generateDischargeCertificatePdf,
-                    icon: const Icon(Icons.fact_check, size: 19),
-                    label: const Text('شهادة خروج المريض PDF',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.statPurpleBorder,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: _openVisualComparisonTool,
-                    icon: const Icon(Icons.compare, size: 19),
-                    label: Text('مقارنة بصرية ($totalImagesCount صور)',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _buildGalleryCard('صور الأشعة والمفراس والرنين (Radiology)', p.radiologyImages, 'xray', Icons.scanner),
-          _buildGalleryCard('صور التحاليل المختبرية (Lab Results)', p.labImages, 'lab', Icons.biotech),
-          _buildGalleryCard('صور الجرح والعملية (Wound & Intra-Op)', p.woundImages, 'wound', Icons.healing),
-          _buildGalleryCard('صور تقرير الزرع النسيجي (Histopathology)', p.biopsyImages, 'biopsy', Icons.science),
-          if (p.surgicalPearls.isNotEmpty || p.isStarred)
-            Card(
-              color: AppColors.statAmberBg,
-              margin: const EdgeInsets.only(top: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.school, color: Colors.orange),
-                        SizedBox(width: 8),
-                        Text('ملاحظات البورد والامتحان (Surgical Pearls & Viva)',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.brown)),
+            _buildGalleryCard('صور الأشعة والمفراس والرنين (Radiology)', p.radiologyImages, 'xray', Icons.scanner),
+            _buildGalleryCard('صور التحاليل المختبرية (Lab Results)', p.labImages, 'lab', Icons.biotech),
+            _buildGalleryCard('صور الجرح والعملية (Wound & Intra-Op)', p.woundImages, 'wound', Icons.healing),
+            _buildGalleryCard('صور تقرير الزرع النسيجي (Histopathology)', p.biopsyImages, 'biopsy', Icons.science),
+            if (p.surgicalPearls.isNotEmpty || p.vivaQuestion.isNotEmpty || p.isStarred)
+              Card(
+                color: AppColors.statAmberBg,
+                margin: const EdgeInsets.only(top: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.school, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('ملاحظات البورد وسؤال الـ Viva على الحالة',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.brown)),
+                        ],
+                      ),
+                      const Divider(),
+                      if (p.vivaQuestion.isNotEmpty) ...[
+                        Text('❓ سؤال الـ Viva: ${p.vivaQuestion}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const SizedBox(height: 4),
+                        Text('💡 الجواب: ${p.vivaAnswer}', style: const TextStyle(fontSize: 13.5)),
+                        const SizedBox(height: 8),
                       ],
-                    ),
-                    const Divider(),
-                    Text(p.surgicalPearls.isEmpty ? 'حالة مميزة للمراجعة الامتحانية' : p.surgicalPearls,
-                        style: const TextStyle(fontSize: 14)),
-                  ],
+                      if (p.surgicalPearls.isNotEmpty)
+                        Text('📌 الدروس الجراحية: ${p.surgicalPearls}', style: const TextStyle(fontSize: 14)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          _buildDetailsCard('الزرع النسيجي والأورام (Histopathology & TNM)', [
-            _item('حالة الزرع النسيجي:', p.biopsyStatus),
-            _item('نتيجة الزرع والحواف (Margins):', p.histopathologyResult),
-            _item('تصنيف TNM وقرار اللجان:', p.tnmStaging),
-          ]),
-          _buildDetailsCard('الشكوى الحالية والتشخيص', [
-            _item('مما يعاني حالياً (الشكوى):', p.chiefComplaint),
-            _item('الفحص السريري:', p.clinicalExam),
-            _item('ملاحظات التحاليل والأشعة:', p.labRadiologyNotes),
-            _item('التشخيص النهائي:', p.diagnosis),
-          ]),
-          _buildDetailsCard('العملية الجراحية ومتابعة الردهة', [
-            _item('اسم ونوع العملية:', p.plannedOperation),
-            _item('التصنيف والحالة:', '${p.operationUrgency} | الحالة: ${p.operationStatus}'),
-            _item('التخدير وتصنيف ASA:', '${p.anesthesiaType} (${p.asaScore})'),
-            _item('تاريخ العملية:', p.operationDate),
-            _item('تفاصيل العملية (Operative Notes):', p.operativeNotes),
-            _item('متابعة الدرينات (Drains):', p.drainsInfo),
-            _item('الوقاية الخثرية (DVT Prophylaxis):', p.dvtProphylaxis),
-            _item('الصادات الحيوية (Antibiotics):', p.antibioticProphylaxis),
-          ]),
-          _buildDetailsCard('التاريخ المرضي والجراحي السابق', [
-            _item('الأمراض المزمنة:', p.chronicDiseases),
-            _item('الحساسية الدوائية:', p.allergies),
-            _item('الأدوية المستمرة:', p.currentMedications),
-            _item('التدخين:', p.smokingStatus),
-            _item('العمليات الجراحية السابقة:', p.pastSurgeries),
-            _item('مضاعفات سابقة:', p.pastComplications),
-          ]),
-          _buildDetailsCard('النتيجة النهائية والمتابعة', [
-            _item('النتيجة النهائية:', p.finalOutcome),
-            _item('تصنيف المضاعفات (Clavien-Dindo):', p.clavienDindoGrade),
-            _item('علاج الخروج وتوصيات الجرح:', p.dischargeTreatment),
-            _item('موعد المراجعة القادم:', p.followUpDate),
-          ]),
-        ],
+            _buildDetailsCard('الشكوى، القصة المرضية (HPI)، والتشخيص', [
+              _item('الشكوى الرئيسية (Chief Complaint):', p.chiefComplaint),
+              _item('القصة المرضية التفصيلية (HPI):', p.hpi),
+              _item('الفحص السريري:', p.clinicalExam),
+              _item('ملاحظات التحاليل والأشعة:', p.labRadiologyNotes),
+              _item('التشخيص النهائي:', p.diagnosis),
+            ]),
+            _buildDetailsCard('الزرع النسيجي والأورام (Histopathology & TNM)', [
+              _item('حالة الزرع النسيجي:', p.biopsyStatus),
+              _item('نتيجة الزرع والحواف (Margins):', p.histopathologyResult),
+              _item('تصنيف TNM وقرار اللجان:', p.tnmStaging),
+            ]),
+            _buildDetailsCard('العملية الجراحية ومتابعة الردهة', [
+              _item('اسم ونوع العملية:', p.plannedOperation),
+              _item('التصنيف والحالة:', '${p.operationUrgency} | الحالة: ${p.operationStatus}'),
+              _item('التخدير وتصنيف ASA:', '${p.anesthesiaType} (${p.asaScore})'),
+              _item('تاريخ العملية:', p.operationDate),
+              _item('تفاصيل العملية (Operative Notes):', p.operativeNotes),
+              _item('متابعة الدرينات (Drains):', p.drainsInfo),
+              _item('الوقاية الخثرية (DVT Prophylaxis):', p.dvtProphylaxis),
+              _item('الصادات الحيوية (Antibiotics):', p.antibioticProphylaxis),
+            ]),
+            _buildDetailsCard('التاريخ المرضي والجراحي السابق', [
+              _item('الأمراض المزمنة:', p.chronicDiseases),
+              _item('الحساسية الدوائية:', p.allergies),
+              _item('الأدوية المستمرة:', p.currentMedications),
+              _item('التدخين:', p.smokingStatus),
+              _item('العمليات الجراحية السابقة:', p.pastSurgeries),
+              _item('مضاعفات سابقة:', p.pastComplications),
+            ]),
+            _buildDetailsCard('النتيجة النهائية والمتابعة', [
+              _item('النتيجة النهائية:', p.finalOutcome),
+              _item('تصنيف المضاعفات (Clavien-Dindo):', p.clavienDindoGrade),
+              _item('علاج الخروج وتوصيات الجرح:', p.dischargeTreatment),
+              _item('موعد المراجعة القادم:', p.followUpDate),
+            ]),
+          ],
+        ),
       ),
     );
   }
@@ -3694,56 +5227,59 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
     final beforeImg = widget.images[_beforeIndex];
     final afterImg = widget.images[_afterIndex];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A1118),
-      appBar: AppBar(
-        backgroundColor: AppColors.navyDark,
-        title: Text('مقارنة بصرية: ${widget.patientName}', style: const TextStyle(fontSize: 15.5)),
-        actions: [
-          TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: Colors.amberAccent),
-            onPressed: () => setState(() => _isSliderMode = !_isSliderMode),
-            icon: Icon(_isSliderMode ? Icons.grid_view_rounded : Icons.compare),
-            label: Text(_isSliderMode ? 'عرض مزدوج' : 'شريط منزلق'),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: _isSliderMode
-                  ? _buildInteractiveSliderView(beforeImg.path, afterImg.path)
-                  : _buildSideBySideView(beforeImg.path, afterImg.path),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0A1118),
+        appBar: AppBar(
+          backgroundColor: AppColors.navyDark,
+          title: Text('مقارنة بصرية: ${widget.patientName}', style: const TextStyle(fontSize: 15.5)),
+          actions: [
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Colors.amberAccent),
+              onPressed: () => setState(() => _isSliderMode = !_isSliderMode),
+              icon: Icon(_isSliderMode ? Icons.grid_view_rounded : Icons.compare),
+              label: Text(_isSliderMode ? 'عرض مزدوج' : 'شريط منزلق'),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFF122338),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: _isSliderMode
+                    ? _buildInteractiveSliderView(beforeImg.path, afterImg.path)
+                    : _buildSideBySideView(beforeImg.path, afterImg.path),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildThumbnailSelectorRow(
-                  title: '1. اختر الصورة الأولى (قبل العملية / Pre-Op):',
-                  selectedIndex: _beforeIndex,
-                  badgeColor: Colors.orange,
-                  onSelect: (idx) => setState(() => _beforeIndex = idx),
-                ),
-                const SizedBox(height: 10),
-                _buildThumbnailSelectorRow(
-                  title: '2. اختر الصورة الثانية (بعد العملية / Post-Op):',
-                  selectedIndex: _afterIndex,
-                  badgeColor: AppColors.statMintBorder,
-                  onSelect: (idx) => setState(() => _afterIndex = idx),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+              decoration: const BoxDecoration(
+                color: Color(0xFF122338),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildThumbnailSelectorRow(
+                    title: '1. اختر الصورة الأولى (قبل العملية / Pre-Op):',
+                    selectedIndex: _beforeIndex,
+                    badgeColor: Colors.orange,
+                    onSelect: (idx) => setState(() => _beforeIndex = idx),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildThumbnailSelectorRow(
+                    title: '2. اختر الصورة الثانية (بعد العملية / Post-Op):',
+                    selectedIndex: _afterIndex,
+                    badgeColor: AppColors.statMintBorder,
+                    onSelect: (idx) => setState(() => _afterIndex = idx),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
