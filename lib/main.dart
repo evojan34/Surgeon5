@@ -489,7 +489,6 @@ class FirebaseCloudService {
     return u;
   }
 
-  // رفع جميع بيانات المرضى والإعدادات إلى حساب Firebase
   static Future<void> uploadToFirebase({
     required String dbUrl,
     required String userSecretKey,
@@ -521,7 +520,6 @@ class FirebaseCloudService {
     }
   }
 
-  // جلب واستعادة البيانات من حساب Firebase إلى الهاتف
   static Future<int> restoreFromFirebase({
     required String dbUrl,
     required String userSecretKey,
@@ -549,7 +547,6 @@ class FirebaseCloudService {
     final decoded = jsonDecode(responseBody);
     if (decoded is! Map<String, dynamic>) return 0;
 
-    // استعادة إعدادات الطبيب إن وجدت
     if (decoded['doctorProfile'] is Map) {
       final prof = Map<String, dynamic>.from(decoded['doctorProfile']);
       for (var entry in prof.entries) {
@@ -604,7 +601,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
   String _hospitalName = 'المستشفى التعليمي';
   int _boardTargetP = 100;
 
-  // إعدادات Firebase السحابية (مضبوطة افتراضياً على قاعدة بياناتك)
   String _firebaseDbUrl = 'https://games-242da-default-rtdb.firebaseio.com';
   String _firebaseSecretCode = 'dr_evan_board_logbook';
   String _lastCloudSync = 'لم تتم المزامنة بعد';
@@ -663,7 +659,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     }).toList();
   }
 
-  // تنفيذ الرفع السحابي إلى Firebase
   Future<void> _performFirebaseUpload() async {
     setState(() => _isCloudSyncing = true);
     try {
@@ -700,7 +695,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     }
   }
 
-  // تنفيذ الاستعادة السحابية من Firebase
   Future<void> _performFirebaseRestore({required bool replaceExisting}) async {
     setState(() => _isCloudSyncing = true);
     try {
@@ -758,7 +752,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: AppColors.statBlueBg,
-                  child: Icon(Icons.cloud_upload_rounded, color: AppColors.statBlueBorder),
+                  child: Icon(Icons.cloud_upload, color: AppColors.statBlueBorder),
                 ),
                 title: const Text('رفع البيانات إلى سحابة Firebase الآن',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -771,7 +765,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: AppColors.statMintBg,
-                  child: Icon(Icons.cloud_download_rounded, color: AppColors.statMintBorder),
+                  child: Icon(Icons.cloud_download, color: AppColors.statMintBorder),
                 ),
                 title: const Text('استعادة البيانات من سحابة Firebase',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1195,7 +1189,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
           const SizedBox(width: 8),
           _buildHeaderSquareButton(
             label: 'نسخ',
-            iconWidget: const Icon(Icons.cloud_sync_rounded, color: Colors.white, size: 22),
+            iconWidget: const Icon(Icons.copy_all_rounded, color: Colors.white, size: 22),
             onTap: _showBackupMenu,
           ),
         ],
@@ -2032,7 +2026,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     return ListView(
       padding: const EdgeInsets.all(14),
       children: [
-        // بطاقة الخزن السحابي في حساب Firebase
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 14),
@@ -2046,7 +2039,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.cloud_done_rounded, color: AppColors.statMintBorder),
+                  Icon(Icons.cloud_done, color: AppColors.statMintBorder),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -2097,7 +2090,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                         _firebaseSecretCode = fbCodeCtrl.text.trim();
                         await _performFirebaseUpload();
                       },
-                      icon: const Icon(Icons.cloud_upload_rounded, size: 19),
+                      icon: const Icon(Icons.cloud_upload, size: 19),
                       label: const Text('حفظ ورفع للسحابة'),
                     ),
                   ),
@@ -2114,7 +2107,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                         _firebaseSecretCode = fbCodeCtrl.text.trim();
                         _showCloudRestoreConfirmDialog();
                       },
-                      icon: const Icon(Icons.cloud_download_rounded, size: 19),
+                      icon: const Icon(Icons.cloud_download, size: 19),
                       label: const Text('استعادة من السحابة'),
                     ),
                   ),
@@ -2123,8 +2116,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
             ],
           ),
         ),
-
-        // بطاقة بيانات الطبيب المقيم
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
@@ -3035,7 +3026,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     );
   }
 
-  // فتح أداة المقارنة البصرية (قبل / بعد العملية)
   void _openVisualComparisonTool() {
     if (_patient == null) return;
     final p = _patient!;
@@ -3066,7 +3056,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     );
   }
 
-  // التقرير الطبي التفصيلي للطبيب (Case Report PDF)
   Future<void> _generateAndSharePdf() async {
     if (_patient == null) return;
     final p = _patient!;
@@ -3134,7 +3123,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     await Printing.layoutPdf(onLayout: (format) async => pdf.save(), name: 'Case_${p.mrn.isEmpty ? p.id : p.mrn}.pdf');
   }
 
-  // مُولّد شهادة الخروج والراشيتة الجراحية للمريض (Discharge Summary & Rx PDF)
   Future<void> _generateDischargeCertificatePdf() async {
     if (_patient == null) return;
     final p = _patient!;
@@ -3146,13 +3134,13 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     final arabicFont = await PdfGoogleFonts.cairoRegular();
     final arabicBold = await PdfGoogleFonts.cairoBold();
 
-    pw.Widget infoBox(String title, String content, {PdfColor bgColor = PdfColors.grey100}) {
+    pw.Widget infoBox(String title, String content, {PdfColor? bgColor}) {
       return pw.Container(
         width: double.infinity,
         margin: const pw.EdgeInsets.only(bottom: 10),
         padding: const pw.EdgeInsets.all(10),
         decoration: pw.BoxDecoration(
-          color: bgColor,
+          color: bgColor ?? PdfColor.fromInt(0xFFF5F7FA),
           borderRadius: pw.BorderRadius.circular(8),
           border: pw.Border.all(color: PdfColors.grey300),
         ),
@@ -3177,7 +3165,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         textDirection: pw.TextDirection.rtl,
         theme: pw.ThemeData.withFont(base: arabicFont, bold: arabicBold),
         build: (context) => [
-          // الترويسة الرسمية لشهادة الخروج
           pw.Container(
             padding: const pw.EdgeInsets.all(14),
             decoration: pw.BoxDecoration(
@@ -3191,9 +3178,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(hName, style: pw.TextStyle(font: arabicBold, color: PdfColors.white, fontSize: 12)),
-                    pw.Text('قسم: ${p.rotation}', style: pw.TextStyle(font: arabicFont, color: PdfColors.grey200, fontSize: 10)),
+                    pw.Text('قسم: ${p.rotation}', style: pw.TextStyle(font: arabicFont, color: PdfColors.grey300, fontSize: 10)),
                     pw.Text('تاريخ الإصدار: ${DateTime.now().toString().split(' ').first}',
-                        style: pw.TextStyle(font: arabicFont, color: PdfColors.grey200, fontSize: 9.5)),
+                        style: pw.TextStyle(font: arabicFont, color: PdfColors.grey300, fontSize: 9.5)),
                   ],
                 ),
                 pw.Column(
@@ -3202,15 +3189,13 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     pw.Text('شهادة خروج مريض وخطة العلاج',
                         style: pw.TextStyle(font: arabicBold, color: PdfColors.white, fontSize: 16)),
                     pw.Text('Surgical Discharge Summary & Prescription',
-                        style: pw.TextStyle(font: arabicFont, color: PdfColors.amber200, fontSize: 10)),
+                        style: pw.TextStyle(font: arabicFont, color: PdfColors.white, fontSize: 10)),
                   ],
                 ),
               ],
             ),
           ),
           pw.SizedBox(height: 12),
-
-          // جدول بيانات المريض الأساسية
           pw.Container(
             padding: const pw.EdgeInsets.all(10),
             decoration: pw.BoxDecoration(
@@ -3231,7 +3216,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('حالة الخروج: ${p.finalOutcome}', style: pw.TextStyle(font: arabicBold, fontSize: 10.5, color: PdfColors.green800)),
+                    pw.Text('حالة الخروج: ${p.finalOutcome}', style: pw.TextStyle(font: arabicBold, fontSize: 10.5, color: PdfColor.fromInt(0xFF0D6832))),
                     pw.Text('تاريخ العملية: ${p.operationDate}', style: pw.TextStyle(font: arabicFont, fontSize: 10.5)),
                     pw.Text('تاريخ الدخول: ${p.admissionDate}', style: pw.TextStyle(font: arabicFont, fontSize: 10.5)),
                   ],
@@ -3240,27 +3225,24 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             ),
           ),
           pw.SizedBox(height: 12),
-
           infoBox('التشخيص الطبي النهائي (Final Diagnosis):', p.diagnosis, bgColor: PdfColors.blue50),
           infoBox('التداخل الجراحي الذي أُجري للمريض (Procedure Performed):',
               '${p.plannedOperation} — (${p.anesthesiaType})', bgColor: PdfColors.blue50),
-
-          // قسم الراشيتة والعلاج الدوائي وتوصيات الجرح
           pw.Container(
             width: double.infinity,
             margin: const pw.EdgeInsets.only(bottom: 10),
             padding: const pw.EdgeInsets.all(12),
             decoration: pw.BoxDecoration(
-              color: PdfColors.green50,
+              color: PdfColor.fromInt(0xFFE8F5E9),
               borderRadius: pw.BorderRadius.circular(8),
-              border: pw.Border.all(color: PdfColors.green700, width: 1.2),
+              border: pw.Border.all(color: PdfColor.fromInt(0xFF2E7D32), width: 1.2),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
-                pw.Text('℞ علاج الخروج وتوصيات العناية بالجرح (Discharge Medications & Wound Care):',
-                    style: pw.TextStyle(font: arabicBold, fontSize: 12, color: PdfColors.green900)),
-                pw.Divider(color: PdfColors.green300),
+                pw.Text('علاج الخروج وتوصيات العناية بالجرح (Discharge Medications & Wound Care):',
+                    style: pw.TextStyle(font: arabicBold, fontSize: 12, color: PdfColor.fromInt(0xFF1B5E20))),
+                pw.Divider(),
                 pw.Text(
                   p.dischargeTreatment.trim().isEmpty
                       ? '1. الالتزام بمواعيد المضادات الحيوية والمسكنات الموصوفة.\n2. الحفاظ على نظافة وجفاف الجرح وتبديل الضماد حسب التعليمات.'
@@ -3271,42 +3253,37 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
               ],
             ),
           ),
-
           if (p.drainsInfo.trim().isNotEmpty)
             infoBox('تعليمات متابعة الدرينات / الصوندات (Drains Care):', p.drainsInfo),
-
           infoBox(
-            '📅 موعد المراجعة القادم ورفع الخيوط / متابعة الزرع النسيجي:',
+            'موعد المراجعة القادم ورفع الخيوط / متابعة الزرع النسيجي:',
             'موعد المراجعة: ${p.followUpDate.isEmpty ? "بعد أسبوع واحد في العيادة الاستشارية" : p.followUpDate}   |   حالة الزرع النسيجي: ${p.biopsyStatus}',
-            bgColor: PdfColors.amber50,
+            bgColor: PdfColor.fromInt(0xFFFFF8E1),
           ),
-
-          // صندوق علامات الخطر للمريض (Red Flags)
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.all(10),
             decoration: pw.BoxDecoration(
-              color: PdfColors.red50,
+              color: PdfColor.fromInt(0xFFFFEBEE),
               borderRadius: pw.BorderRadius.circular(8),
-              border: pw.Border.all(color: PdfColors.red400),
+              border: pw.Border.all(color: PdfColor.fromInt(0xFFE53935)),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
-                pw.Text('⚠️ علامات تستوجب مراجعة الطوارئ أو الاتصال بالطبيب فوراً (Warning Signs):',
-                    style: pw.TextStyle(font: arabicBold, fontSize: 10.5, color: PdfColors.red900)),
+                pw.Text('علامات تستوجب مراجعة الطوارئ أو الاتصال بالطبيب فوراً (Warning Signs):',
+                    style: pw.TextStyle(font: arabicBold, fontSize: 10.5, color: PdfColor.fromInt(0xFFB71C1C))),
                 pw.SizedBox(height: 3),
                 pw.Text(
                   '• ارتفاع شديد في درجة الحرارة أو قشعريرة.\n'
                   '• احمرار متزايد، تورم، أو خروج إفرازات/نزف مستمر من موضع الجرح.\n'
                   '• ألم شديد لا يستجيب للمسكنات، أو تقيؤ مستمر، أو ضيق في التنفس.',
                   textAlign: pw.TextAlign.right,
-                  style: pw.TextStyle(font: arabicFont, fontSize: 9.5, color: PdfColors.red900),
+                  style: pw.TextStyle(font: arabicFont, fontSize: 9.5, color: PdfColor.fromInt(0xFFB71C1C)),
                 ),
               ],
             ),
           ),
-
           pw.SizedBox(height: 24),
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -3359,12 +3336,12 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
             onPressed: _toggleStar,
           ),
           IconButton(
-            icon: const Icon(Icons.compare_rounded, color: Colors.cyanAccent),
+            icon: const Icon(Icons.compare, color: Colors.cyanAccent),
             tooltip: 'المقارنة البصرية (قبل / بعد)',
             onPressed: _openVisualComparisonTool,
           ),
           IconButton(
-            icon: const Icon(Icons.assignment_turned_in_rounded, color: Colors.greenAccent),
+            icon: const Icon(Icons.fact_check, color: Colors.greenAccent),
             tooltip: 'شهادة خروج المريض (Discharge PDF)',
             onPressed: _generateDischargeCertificatePdf,
           ),
@@ -3459,8 +3436,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
               ),
             ),
           ),
-
-          // شريط الإجراءات السريعة (شهادة الخروج + المقارنة البصرية قبل/بعد)
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: Row(
@@ -3474,7 +3449,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: _generateDischargeCertificatePdf,
-                    icon: const Icon(Icons.assignment_turned_in_rounded, size: 19),
+                    icon: const Icon(Icons.fact_check, size: 19),
                     label: const Text('شهادة خروج المريض PDF',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                   ),
@@ -3489,7 +3464,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: _openVisualComparisonTool,
-                    icon: const Icon(Icons.compare_rounded, size: 19),
+                    icon: const Icon(Icons.compare, size: 19),
                     label: Text('مقارنة بصرية ($totalImagesCount صور)',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                   ),
@@ -3497,7 +3472,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
               ],
             ),
           ),
-
           _buildGalleryCard('صور الأشعة والمفراس والرنين (Radiology)', p.radiologyImages, 'xray', Icons.scanner),
           _buildGalleryCard('صور التحاليل المختبرية (Lab Results)', p.labImages, 'lab', Icons.biotech),
           _buildGalleryCard('صور الجرح والعملية (Wound & Intra-Op)', p.woundImages, 'wound', Icons.healing),
@@ -3687,7 +3661,7 @@ class VisualComparisonScreen extends StatefulWidget {
 class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
   int _beforeIndex = 0;
   int _afterIndex = 1;
-  bool _isSliderMode = true; // true = شريط سحب تفاعلي | false = جنباً إلى جنب
+  bool _isSliderMode = true;
   double _sliderPosition = 0.5;
 
   @override
@@ -3713,14 +3687,13 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
           TextButton.icon(
             style: TextButton.styleFrom(foregroundColor: Colors.amberAccent),
             onPressed: () => setState(() => _isSliderMode = !_isSliderMode),
-            icon: Icon(_isSliderMode ? Icons.view_column_rounded : Icons.compare_rounded),
+            icon: Icon(_isSliderMode ? Icons.grid_view_rounded : Icons.compare),
             label: Text(_isSliderMode ? 'عرض مزدوج' : 'شريط منزلق'),
           ),
         ],
       ),
       body: Column(
         children: [
-          // منطقة العرض والمقارنة الرئيسية
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -3729,8 +3702,6 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
                   : _buildSideBySideView(beforeImg['path']!, afterImg['path']!),
             ),
           ),
-
-          // شريط اختيار صورة "قبل" وصورة "بعد" من أرشيف المريض
           Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
             decoration: const BoxDecoration(
@@ -3761,7 +3732,6 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
     );
   }
 
-  // الوضع الأول: شريط السحب التفاعلي المنزلق (Before / After Split Slider)
   Widget _buildInteractiveSliderView(String beforePath, String afterPath) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -3780,20 +3750,21 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // الطبقة الخلفية الكاملة: صورة (بعد / Post-Op)
-                File(afterPath).existsSync()
-                    ? Image.file(File(afterPath), fit: BoxFit.contain)
-                    : const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 64)),
-
-                // الطبقة الأمامية المقصوصة: صورة (قبل / Pre-Op)
-                ClipRect(
-                  clipper: _HorizontalSplitClipper(splitX),
-                  child: File(beforePath).existsSync()
-                      ? Image.file(File(beforePath), fit: BoxFit.contain)
+                Container(
+                  color: Colors.black,
+                  child: File(afterPath).existsSync()
+                      ? Image.file(File(afterPath), fit: BoxFit.contain)
                       : const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 64)),
                 ),
-
-                // الخط العمودي الفاصل ومقبض السحب
+                ClipRect(
+                  clipper: _HorizontalSplitClipper(splitX),
+                  child: Container(
+                    color: Colors.black,
+                    child: File(beforePath).existsSync()
+                        ? Image.file(File(beforePath), fit: BoxFit.contain)
+                        : const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 64)),
+                  ),
+                ),
                 Positioned(
                   left: splitX - 18,
                   top: 0,
@@ -3814,14 +3785,12 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
                             border: Border.all(color: Colors.white, width: 2),
                             boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6)],
                           ),
-                          child: const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 20),
+                          child: const Icon(Icons.compare, color: Colors.white, size: 18),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                // وسما "قبل" و "بعد" في الزوايا العلوية
                 Positioned(
                   top: 12,
                   left: 12,
@@ -3840,7 +3809,6 @@ class _VisualComparisonScreenState extends State<VisualComparisonScreen> {
     );
   }
 
-  // الوضع الثاني: العرض المزدوج جنباً إلى جنب مع التكبير (Side-by-Side Zoomable)
   Widget _buildSideBySideView(String beforePath, String afterPath) {
     return Row(
       children: [
