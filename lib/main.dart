@@ -6146,4 +6146,3 @@ class _HorizontalSplitClipper extends CustomClipper<Rect> {
   @override
   bool shouldReclip(covariant _HorizontalSplitClipper oldClipper) => oldClipper.splitWidth != splitWidth;
 }
-لسطر مباشرة ===
