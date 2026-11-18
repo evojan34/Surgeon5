@@ -30,7 +30,7 @@ jobs:
       - name: Prepare Android Platform & Enable Internet Permission
         run: |
           if [ ! -d "android" ]; then
-            flutter create .
+            flutter create --project-name surgeon5 --platforms=android .
           fi
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if ! grep -q "android.permission.INTERNET" "$MANIFEST"; then
