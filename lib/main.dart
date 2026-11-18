@@ -137,7 +137,7 @@ class PdfAndBookExtractorService {
       try {
         final compressedBytes = latin1.encode(streamContent);
         final decompressed = zlib.decode(compressedBytes);
-        final textStream = utf8.decode(decompressed, allowInvalid: true);
+        final textStream = utf8.decode(decompressed, allowMalformed: true);
         _parsePdfTextOperators(textStream, extractedChunks);
       } catch (_) {
         // إذا لم يكن التدفق مضغوطاً بـ zlib، نحلله مباشرة
