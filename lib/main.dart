@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -3541,10 +3542,37 @@ class _MainShellScreenState extends State<MainShellScreen> {
       ],
     );
   }
-
   Future<void> _openPhonePdfScannerSheet() async {
     final isEn = _appLanguage == 'en';
-    final files = await PdfAndBookExtractorService.scanPhoneForBookFiles();
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'txt', 'md'],
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final pickedPath = result.files.single.path;
+      final pickedName = result.files.single.name;
+      if (pickedPath == null) return;
+
+      setState(() {
+        _bookFilePathCtrl.text = pickedPath;
+        _bookTopicCtrl.text = p.basenameWithoutExtension(pickedName);
+      });
+      await _loadFileFromPath(pickedPath);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isEn ? 'Failed to open file picker: $e' : 'تعذر فتح مدير الملفات: $e',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
 
     if (!mounted) return;
     showModalBottomSheet(
